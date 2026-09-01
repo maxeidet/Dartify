@@ -118,7 +118,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)]">
+    <div className="flex flex-col h-screen overflow-y-auto w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)]">
 
       <div className="relative pt-[26px] px-[22px] pb-12 z-10 flex flex-col flex-1 max-w-md mx-auto w-full">
 

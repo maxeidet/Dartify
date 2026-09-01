@@ -6,7 +6,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { GameState, DartThrow, GameConfig, Participant } from '../core/types';
-import { throwScore } from '../core/types';
 import { getEngine } from '../core/gameModeRegistry';
 import { createX01Game } from '../core/x01Engine';
 import { createAroundTheClockGame } from '../core/aroundTheClockEngine';
@@ -96,10 +95,10 @@ export const useGameStore = create<GameStore>()(
       isOnlineMatch: false,
 
       startLocalGame: (participants, config) => {
-        const matchId = typeof crypto !== 'undefined' && crypto.randomUUID 
-          ? crypto.randomUUID() 
+        const matchId = typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
           : Date.now().toString(36) + Math.random().toString(36).substring(2);
-        
+
         let gameState: GameState;
         if (config.mode === 'x01') {
           gameState = createX01Game(matchId, participants, config as X01Config);
@@ -131,8 +130,8 @@ export const useGameStore = create<GameStore>()(
         if (isOnlineMatch && matchId) {
           const scoreValue =
             dart.segment === 0 ? 0 :
-            dart.segment === 25 ? (dart.multiplier === 2 ? 50 : 25) :
-            dart.segment * dart.multiplier;
+              dart.segment === 25 ? (dart.multiplier === 2 ? 50 : 25) :
+                dart.segment * dart.multiplier;
 
           const wasBust = newState.roundHistory.at(-1)?.isBust ?? false;
 
@@ -156,87 +155,89 @@ export const useGameStore = create<GameStore>()(
         const { gameState, matchId, isOnlineMatch } = get();
         if (!gameState) return;
 
-        // If no darts in current round, we need to cross-round undo
-        if (gameState.currentDartsInRound.length === 0) {
-          if (gameState.roundHistory.length === 0) return; // Nothing to undo
+        const engine = getEngine(gameState.gameMode);
+        const wasFinished = gameState.status === 'finished';
+        let newState = { ...gameState };
+        let deletedDartNumber: number;
+        let deletedRoundNumber: number;
+        let deletedParticipantId: string;
 
-          const lastRound = gameState.roundHistory[gameState.roundHistory.length - 1];
-          const previousPlayerIndex = gameState.players.findIndex(p => p.participantId === lastRound.participantId);
+        if (newState.currentDartsInRound.length > 0) {
+          deletedParticipantId = newState.players[newState.currentPlayerIndex].participantId;
+          deletedRoundNumber = newState.currentRound;
+          deletedDartNumber = newState.currentDartsInRound.length;
+          newState.currentDartsInRound = newState.currentDartsInRound.slice(0, -1);
+        } else {
+          if (newState.roundHistory.length === 0) return; // Nothing to undo
+
+          const lastRound = newState.roundHistory[newState.roundHistory.length - 1];
+          const previousPlayerIndex = newState.players.findIndex(p => p.participantId === lastRound.participantId);
           if (previousPlayerIndex === -1) return;
 
-          set({
-            gameState: {
-              ...gameState,
-              players: gameState.players,
-              currentDartsInRound: lastRound.throws,
-              currentPlayerIndex: previousPlayerIndex,
-              currentRound: lastRound.roundNumber,
-              isCurrentRoundBust: lastRound.isBust,
-              roundHistory: gameState.roundHistory.slice(0, -1),
-              status: 'ongoing', // in case they won and hit undo
-              winnerId: undefined,
-            },
-          });
+          newState.roundHistory = newState.roundHistory.slice(0, -1);
+          newState.currentPlayerIndex = previousPlayerIndex;
+          newState.currentRound = lastRound.roundNumber;
+          newState.currentDartsInRound = lastRound.throws.slice(0, lastRound.actualThrows);
+          newState.status = 'ongoing';
+          newState.winnerId = undefined;
 
-          // We don't delete from supabase here, because we haven't popped a dart yet.
-          // We just restored the round. The user has to click Undo again to actually pop a dart.
-          return;
+          deletedParticipantId = lastRound.participantId;
+          deletedRoundNumber = lastRound.roundNumber;
+          deletedDartNumber = newState.currentDartsInRound.length;
+
+          if (newState.currentDartsInRound.length > 0) {
+            newState.currentDartsInRound = newState.currentDartsInRound.slice(0, -1);
+          }
         }
 
-        // Pop last dart from current round
-        const player = gameState.players[gameState.currentPlayerIndex];
-        const lastDart = gameState.currentDartsInRound.at(-1)!;
-        
-        // Only restore score if it wasn't a bust dart (because a bust dart already reverted the score to start of round)
-        // Wait, if it's currently busted, the score shown is the start of round score.
-        // If we undo the bust dart, we need to return the score to what it was BEFORE the bust.
-        // Which means we need to subtract the other darts in the round!
-        // Start of round score is scoreLeft (since it was reverted).
-        // Score before bust = start of round score - sum of previous darts.
-        let restoredScore = player.score.scoreLeft as number;
-        const startingScore = (gameState.config as X01Config).startingScore;
-        
-        if (gameState.isCurrentRoundBust) {
-          const previousDartsInRound = gameState.currentDartsInRound.slice(0, -1);
-          const scoreOfPreviousDarts = previousDartsInRound.reduce((sum, d) => sum + throwScore(d), 0);
-          restoredScore = restoredScore - scoreOfPreviousDarts;
-        } else {
-          const lastScore = throwScore(lastDart);
-          restoredScore = restoredScore + lastScore;
+        // Now mathematically rebuild the current player's state from the beginning of the round
+        const currentPlayer = newState.players[newState.currentPlayerIndex];
+        const previousRounds = newState.roundHistory.filter(r => r.participantId === currentPlayer.participantId);
+        const lastRoundForPlayer = previousRounds[previousRounds.length - 1];
+
+        const startScore = lastRoundForPlayer
+          ? { ...lastRoundForPlayer.snapshot }
+          : { ...engine.initPlayerScore(newState.config) };
+
+        const startDartsThrown = previousRounds.reduce((sum, r) => sum + r.throws.length, 0);
+
+        const rebuiltPlayer: GameState['players'][number] = {
+          ...currentPlayer,
+          score: startScore,
+          dartsThrown: startDartsThrown,
+        };
+
+        newState.players = newState.players.map((p, i) => i === newState.currentPlayerIndex ? rebuiltPlayer : p);
+
+        const dartsToReapply = newState.currentDartsInRound;
+        newState.currentDartsInRound = [];
+        newState.isCurrentRoundBust = false;
+
+        // Replay the round's remaining darts through the engine so it applies to ANY game mode seamlessly
+        for (const dart of dartsToReapply) {
+          newState = engine.applyThrow(newState, dart);
         }
-        restoredScore = Math.min(startingScore, restoredScore);
 
-        const updatedPlayers = gameState.players.map((p, i) =>
-          i === gameState.currentPlayerIndex
-            ? { ...p, score: { ...p.score, scoreLeft: restoredScore }, dartsThrown: p.dartsThrown - 1 }
-            : p
-        );
-
-        set({
-          gameState: {
-            ...gameState,
-            players: updatedPlayers,
-            currentDartsInRound: gameState.currentDartsInRound.slice(0, -1),
-            isCurrentRoundBust: false, // undoing a dart always clears the bust state (since the bust dart is what we are undoing)
-          },
-        });
+        set({ gameState: newState });
 
         // Delete from Supabase
         if (isOnlineMatch && matchId && isOnlineModeAvailable) {
-          const roundNumber = gameState.currentRound;
-          const dartNumber = gameState.currentDartsInRound.length;
           supabase
             .from('throws')
             .delete()
             .match({
               match_id: matchId,
-              participant_id: player.participantId,
-              round_number: roundNumber,
-              dart_number: dartNumber,
+              participant_id: deletedParticipantId,
+              round_number: deletedRoundNumber,
+              dart_number: deletedDartNumber,
             })
             .then(({ error }) => {
               if (error) console.error('Undo sync error:', error);
             });
+
+          if (wasFinished) {
+            void (async () => { const { error } = await supabase.from('matches').update({ status: 'ongoing', winner_id: null }).eq('id', matchId); if (error) console.error(error); })();
+          }
         }
       },
 

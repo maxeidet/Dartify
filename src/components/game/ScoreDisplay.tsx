@@ -29,17 +29,21 @@ export function ScoreDisplay({
   if (gameMode === 'around_the_clock') {
     mainScore = player.score.currentTarget as string | number;
     if (mainScore === 25) mainScore = 'BULL';
-    
+
     // User requested hit rate per dart
     const targetsHit = player.score.targetsHit as number || 0;
-    const hitRate = player.dartsThrown > 0 
-      ? Math.round((targetsHit / player.dartsThrown) * 100) 
+    const hitRate = player.dartsThrown > 0
+      ? Math.round((targetsHit / player.dartsThrown) * 100)
       : 0;
     statsText = `Hit Rate ${hitRate}%`;
   } else if (gameMode === 'round_the_world') {
     mainScore = player.score.points as number;
     const target = player.score.currentTarget as string | number;
-    statsText = `Target: ${target === 25 ? 'BULL' : target}`;
+    const targetsHit = player.score.targetsHit as number || 0;
+    const hitRate = player.dartsThrown > 0
+      ? Math.round((targetsHit / player.dartsThrown) * 100)
+      : 0;
+    statsText = `Target: ${target === 25 ? 'BULL' : target} | Hit Rate ${hitRate}%`;
   } else {
     mainScore = player.score.scoreLeft as number;
     // Show average points per dart for the first round, then per 3 darts.
