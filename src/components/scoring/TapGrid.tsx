@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import type { DartThrow, Segment, Multiplier } from '../../core/types';
-import { throwScore, throwLabel } from '../../core/types';
+import { throwLabel } from '../../core/types';
 import { Undo2 } from 'lucide-react';
 
 // ─────────────────────────────────────────────

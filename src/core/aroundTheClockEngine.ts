@@ -16,7 +16,7 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
   modeId: 'around_the_clock',
   displayName: 'Around the Clock',
 
-  initPlayerScore(config: AroundTheClockConfig): Record<string, number | string | boolean> {
+  initPlayerScore(_config: AroundTheClockConfig): Record<string, number | string | boolean> {
     return {
       targetIndex: 0,
       currentTarget: 1, // starts at 1

@@ -14,7 +14,7 @@ const isSpeechSupported = typeof window !== 'undefined' &&
   ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
 export function VoiceInputButton({ isActive, onToggle, onCommand }: VoiceInputButtonProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const recognitionRef = useRef<any>(null);
   const [lastParsed, setLastParsed] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +58,9 @@ export function VoiceInputButton({ isActive, onToggle, onCommand }: VoiceInputBu
     } else {
       recognitionRef.current?.stop();
       recognitionRef.current = null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLastParsed(null);
+       
       setError(null);
     }
 

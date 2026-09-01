@@ -1,6 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { DartThrow, Segment, Multiplier } from '../../core/types';
+import type { DartThrow, Multiplier } from '../../core/types';
 import { throwLabel } from '../../core/types';
 
 // ─────────────────────────────────────────────

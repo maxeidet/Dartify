@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { usePlayerStore, LocalPlayer } from '../../store/playerStore';
+import { usePlayerStore } from '../../store/playerStore';
 import { Plus } from 'lucide-react';
 
 export type SelectedPlayer = {

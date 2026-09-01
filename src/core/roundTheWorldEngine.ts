@@ -11,7 +11,7 @@ export const roundTheWorldEngine: GameModeEngine<RoundTheWorldConfig> = {
     modeId: 'round_the_world',
     displayName: 'Round the World',
 
-    initPlayerScore(config: RoundTheWorldConfig): Record<string, number | string | boolean> {
+    initPlayerScore(_config: RoundTheWorldConfig): Record<string, number | string | boolean> {
         return {
             targetIndex: 0,
             currentTarget: 1, // starts at 1
@@ -40,7 +40,7 @@ export const roundTheWorldEngine: GameModeEngine<RoundTheWorldConfig> = {
         const newPoints = (player.score.points as number) + earnedPoints;
         const newDartsInRound = [...state.currentDartsInRound, throw_];
 
-        let updatedPlayer: PlayerState = {
+        const updatedPlayer: PlayerState = {
             ...player,
             dartsThrown: player.dartsThrown + 1,
             score: {
@@ -50,11 +50,11 @@ export const roundTheWorldEngine: GameModeEngine<RoundTheWorldConfig> = {
             },
         };
 
-        let updatedPlayers = state.players.map((p, i) =>
+        const updatedPlayers = state.players.map((p, i) =>
             i === state.currentPlayerIndex ? updatedPlayer : p
         );
 
-        let newState = {
+        const newState = {
             ...state,
             players: updatedPlayers,
             currentDartsInRound: newDartsInRound,

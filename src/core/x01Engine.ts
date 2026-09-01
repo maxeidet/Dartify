@@ -228,13 +228,7 @@ export const x01Engine: GameModeEngine<X01Config> = {
     // Check win (score exactly 0 after a valid throw)
     const won = !bust && newScoreLeft === 0;
 
-    let newStatus = state.status;
-    let winnerId = state.winnerId;
-
     if (won) {
-      newStatus = 'finished';
-      winnerId = player.participantId;
-      
       // Auto-advance only on win
       const entry: RoundEntry = {
         participantId: player.participantId,
@@ -248,8 +242,8 @@ export const x01Engine: GameModeEngine<X01Config> = {
 
       return {
         ...state,
-        status: newStatus,
-        winnerId,
+        status: 'finished',
+        winnerId: player.participantId,
         players: updatedPlayers,
         currentDartsInRound: [],
         isCurrentRoundBust: false,
@@ -274,8 +268,6 @@ export const x01Engine: GameModeEngine<X01Config> = {
   advanceRound(state: GameState): GameState {
     // Called when host clicks "Next Round" manually (< 3 darts thrown)
     const player = state.players[state.currentPlayerIndex];
-    const config = state.config as X01Config;
-    const scoreLeft = player.score.scoreLeft as number;
 
     // Darts not thrown count as misses — add them to history
     const remainingMisses = 3 - state.currentDartsInRound.length;
