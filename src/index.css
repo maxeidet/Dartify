@@ -1,0 +1,332 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────
+   Design Tokens
+───────────────────────────────────────────── */
+@theme {
+  /* Colors */
+  --color-cream:       #F8F5EC;
+  --color-panel:       #FFFFFF;
+  --color-line:        #E7E0CC;
+  --color-forest:      #1A5833;
+  --color-forest-deep: #0F3A22;
+  --color-gold:        #BFA464;
+  --color-gold-deep:   #96793A;
+  --color-ink:         #22291F;
+  --color-muted:       #75806F;
+
+  /* Keep original UI colors for Game view compatibility */
+  --color-bg-base:     #F8F5EC;
+  --color-bg-surface:  #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-card:     #FFFFFF;
+
+  --color-accent:      #1A5833;
+  --color-accent-dim:  #0F3A22;
+
+  --color-text-primary:   #0F3A22;
+  --color-text-secondary: #75806F;
+
+  --color-border:      #E7E0CC;
+  --color-border-bright: #BFA464;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Fraunces', serif;
+  --font-mono: 'Space Mono', monospace;
+
+  /* Radii */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+}
+
+/* ─────────────────────────────────────────────
+   Base
+───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #EDE6D2;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* Typography Utilities */
+@layer utilities {
+  .font-sans {
+    font-family: 'Inter', system-ui, sans-serif !important;
+  }
+  .font-display {
+    font-family: 'Fraunces', serif !important;
+  }
+  .font-mono {
+    font-family: 'Space Mono', monospace !important;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Custom Home Screen Styling
+───────────────────────────────────────────── */
+.bg-dart-texture {
+  background: var(--color-cream);
+  position: relative;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.bg-dart-texture::before {
+  content: "";
+  position: absolute; 
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(15, 58, 34, 0.012) 0px, transparent 1px, transparent 3px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Dash borders */
+.border-gradient-rule {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-gold) 0%, var(--color-line) 40%, var(--color-line) 100%);
+}
+.border-line-left {
+  border-left: 1px solid var(--color-line);
+}
+
+/* ─────────────────────────────────────────────
+   Dart Grid Specific Styles (from original)
+───────────────────────────────────────────── */
+.dart-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 80ms ease, background-color 80ms ease, box-shadow 80ms ease;
+  border: 1px solid var(--color-border);
+  min-height: 32px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
+}
+
+.dartboard-surface {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.dart-cell:active {
+  transform: scale(0.92);
+}
+
+.dart-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.dart-cell:active::after {
+  opacity: 1;
+}
+
+.dart-cell-single {
+  background-color: var(--color-cream);
+  color: var(--color-forest-deep);
+  font-size: 1rem;
+}
+.dart-cell-single:hover {
+  background-color: var(--color-panel);
+  border-color: var(--color-forest);
+}
+
+.dart-cell-double {
+  background-color: #E6F0EA;
+  color: var(--color-forest);
+  font-size: 0.9rem;
+}
+.dart-cell-double:hover {
+  background-color: #D1E2D8;
+  border-color: rgba(26,88,51,0.3);
+}
+
+.dart-cell-treble {
+  background-color: #F8F2E6;
+  color: var(--color-gold-deep);
+  font-size: 0.9rem;
+}
+.dart-cell-treble:hover {
+  background-color: #F0E4CE;
+  border-color: rgba(191,164,100,0.4);
+}
+
+.dart-cell-special {
+  background-color: var(--color-panel);
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dart-cell-bull {
+  background: var(--color-forest);
+  color: white;
+}
+.dart-cell-bullseye {
+  background: #A63B37;
+  color: white;
+}
+
+@keyframes scoreFlash {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.score-flash {
+  animation: scoreFlash 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes bust {
+  0%   { background-color: inherit; }
+  30%  { background-color: rgba(166,59,55,0.3); }
+  100% { background-color: inherit; }
+}
+.bust-flash {
+  animation: bust 600ms ease;
+}
+
+@keyframes scoreCrack {
+  0%   { transform: translateX(0) scale(1); }
+  18%  { transform: translateX(-4px) scale(1.08); }
+  36%  { transform: translateX(4px) scale(0.98); }
+  54%  { transform: translateX(-2px) scale(1.02); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes scoreCrackLine {
+  0%   { opacity: 0; stroke-dashoffset: 160; }
+  22%  { opacity: 1; }
+  100% { opacity: 0.72; stroke-dashoffset: 0; }
+}
+
+.score-card-bust {
+  animation: bust 600ms ease;
+}
+
+.score-crack {
+  animation: scoreCrack 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.score-crack-lines path {
+  fill: none;
+  stroke: #A63B37;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 160;
+  animation: scoreCrackLine 520ms ease-out forwards;
+}
+
+@keyframes dartboardBust {
+  0%   { transform: translateX(0) scale(1); }
+  20%  { transform: translateX(-3px) scale(1.012); }
+  45%  { transform: translateX(3px) scale(0.998); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes dartboardCrack {
+  0%   { opacity: 0; stroke-dashoffset: 280; }
+  20%  { opacity: 1; }
+  100% { opacity: 0.85; stroke-dashoffset: 0; }
+}
+
+.dartboard-bust {
+  transform-origin: center;
+  animation: dartboardBust 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dartboard-crack path {
+  fill: none;
+  stroke: #A63B37;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 280;
+  animation: dartboardCrack 600ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .score-card-bust,
+  .score-crack,
+  .score-crack-lines path {
+    animation: none;
+  }
+
+  .dartboard-bust,
+  .dartboard-crack path {
+    animation: none;
+  }
+}
+
+@keyframes scoreCount {
+  from { opacity: 0.4; transform: scale(0.85) translateY(8px); }
+  to   { opacity: 1;   transform: scale(1)    translateY(0); }
+}
+.score-count-enter {
+  animation: scoreCount 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes voicePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(26,88,51,0.5); }
+  50%       { box-shadow: 0 0 0 10px rgba(26,88,51,0); }
+}
+.voice-pulse {
+  animation: voicePulse 1.4s ease-in-out infinite;
+}
+
+.glass-card {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(15, 58, 34, 0.04);
+}
+
+@keyframes iosSheetEnter {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.ios-sheet {
+  animation: iosSheetEnter 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-cream); }
+::-webkit-scrollbar-thumb { background: var(--color-muted); border-radius: 3px; }
