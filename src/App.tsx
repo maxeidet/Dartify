@@ -4,6 +4,7 @@ import { HomePage } from './pages/HomePage';
 import { GamePage } from './pages/GamePage';
 import { AuthPage } from './pages/AuthPage';
 import { StatsPage } from './pages/StatsPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { useAuthStore } from './store/authStore';
 import './index.css';
 
@@ -55,6 +56,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <StatsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

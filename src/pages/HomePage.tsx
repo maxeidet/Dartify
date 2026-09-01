@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { useHistoryStore, computeX01Avg, computeHighOut, computeBestLeg } from '../store/historyStore';
+import { useAuthStore } from '../store/authStore';
 import type { Participant, X01Config, AroundTheClockConfig } from '../core/types';
 import { X } from 'lucide-react';
 import bdcLogo from '../assets/bdc-logo-transparent.png';
@@ -34,6 +35,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const { gameState, startLocalGame } = useGameStore();
   const { gameHistory } = useHistoryStore();
+  const { profile } = useAuthStore();
 
   // Computed stats
   const x01Avg = computeX01Avg(gameHistory);
@@ -134,12 +136,22 @@ export function HomePage() {
             <img src={bdcLogo} alt="BDC Logo" className="w-full h-auto block" />
           </div>
 
-          <div className="w-[42px] h-[42px] rounded-full border-[1.5px] border-forest flex items-center justify-center bg-panel shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-forest)" strokeWidth="1.6">
-              <circle cx="12" cy="8" r="3.4" />
-              <path d="M5 20c0-3.6 3.1-6.4 7-6.4s7 2.8 7 6.4" />
-            </svg>
-          </div>
+          <button
+            id="home-avatar-btn"
+            onClick={() => navigate('/profile')}
+            className="w-[42px] h-[42px] rounded-full border-[1.5px] border-forest flex items-center justify-center bg-panel shrink-0 hover:border-gold transition-colors"
+          >
+            {profile?.username ? (
+              <span className="font-display font-black text-[16px] text-forest-deep">
+                {profile.username.charAt(0).toUpperCase()}
+              </span>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-forest)" strokeWidth="1.6">
+                <circle cx="12" cy="8" r="3.4" />
+                <path d="M5 20c0-3.6 3.1-6.4 7-6.4s7 2.8 7 6.4" />
+              </svg>
+            )}
+          </button>
         </header>
 
         <hr className="mt-5 border-gradient-rule" />
