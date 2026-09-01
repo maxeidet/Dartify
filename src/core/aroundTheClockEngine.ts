@@ -45,6 +45,14 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
         if (throw_.segment === 25 || throw_.multiplier === 1) {
           isHit = true;
         }
+      } else if (config.hitType === 'double') {
+        if (throw_.segment === 25 || throw_.multiplier === 2) {
+          isHit = true;
+        }
+      } else if (config.hitType === 'trebles') {
+        if (throw_.segment === 25 || throw_.multiplier === 3) {
+          isHit = true;
+        }
       }
     }
 

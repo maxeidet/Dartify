@@ -41,7 +41,7 @@ export function HomePage() {
   const [doubleIn, setDoubleIn] = useState(false);
 
   const [showATCSetup, setShowATCSetup] = useState(false);
-  const [atcHitType, setAtcHitType] = useState<'singles' | 'any'>('any');
+  const [atcHitType, setAtcHitType] = useState<'singles' | 'any' | 'double' | 'trebles'>('any');
   const [atcIncludesBull, setAtcIncludesBull] = useState(true);
 
   const [showRTWSetup, setShowRTWSetup] = useState(false);
@@ -366,10 +366,10 @@ export function HomePage() {
                 <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
                   Select Players ({selectedPlayers.length} / {numPlayers})
                 </label>
-                <PlayerSelector 
-                  numPlayers={numPlayers} 
-                  selectedPlayers={selectedPlayers} 
-                  onChange={setSelectedPlayers} 
+                <PlayerSelector
+                  numPlayers={numPlayers}
+                  selectedPlayers={selectedPlayers}
+                  onChange={setSelectedPlayers}
                 />
               </div>
 
@@ -473,10 +473,10 @@ export function HomePage() {
                 <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
                   Select Players ({selectedPlayers.length} / {numPlayers})
                 </label>
-                <PlayerSelector 
-                  numPlayers={numPlayers} 
-                  selectedPlayers={selectedPlayers} 
-                  onChange={setSelectedPlayers} 
+                <PlayerSelector
+                  numPlayers={numPlayers}
+                  selectedPlayers={selectedPlayers}
+                  onChange={setSelectedPlayers}
                 />
               </div>
 
@@ -485,18 +485,20 @@ export function HomePage() {
                 <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
                   Game Mode Settings
                 </label>
-                
+
                 {/* Hit Type */}
-                <div className="flex gap-2 mb-2">
+                <div className="grid grid-cols-2 gap-2 mb-2">
                   {([
                     { value: 'any', label: 'Any Hit' },
-                    { value: 'singles', label: 'Singles Only' }
+                    { value: 'singles', label: 'Singles Only' },
+                    { value: 'double', label: 'Doubles Only' },
+                    { value: 'trebles', label: 'Trebles Only' },
                   ] as const).map((mode) => (
                     <button
                       key={mode.value}
                       onClick={() => setAtcHitType(mode.value)}
                       className={`
-                        flex-1 py-3 rounded-xl border font-sans font-extrabold text-[15px] transition-all
+                        py-3 rounded-xl border font-sans font-extrabold text-[15px] transition-all
                         ${atcHitType === mode.value
                           ? 'bg-forest border-forest text-white shadow-md'
                           : 'bg-panel border-line text-muted hover:border-gold'
@@ -598,10 +600,10 @@ export function HomePage() {
                 <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
                   Select Players ({selectedPlayers.length} / {numPlayers})
                 </label>
-                <PlayerSelector 
-                  numPlayers={numPlayers} 
-                  selectedPlayers={selectedPlayers} 
-                  onChange={setSelectedPlayers} 
+                <PlayerSelector
+                  numPlayers={numPlayers}
+                  selectedPlayers={selectedPlayers}
+                  onChange={setSelectedPlayers}
                 />
               </div>
 
@@ -610,7 +612,7 @@ export function HomePage() {
                 <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
                   Game Mode Settings
                 </label>
-                
+
                 <div className="flex flex-col gap-2">
                   <div
                     onClick={() => setRtwIncludesBull(!rtwIncludesBull)}

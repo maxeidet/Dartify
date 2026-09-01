@@ -111,7 +111,7 @@ export interface X01Config {
 export interface AroundTheClockConfig {
   mode: 'around_the_clock';
   /** 'singles' only, or include doubles/trebles as valid hits */
-  hitType: 'singles' | 'any';
+  hitType: 'singles' | 'any' | 'double' | 'trebles';
   includesBull: boolean;
 }
 
