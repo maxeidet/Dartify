@@ -102,30 +102,8 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
       };
     }
 
-    // Auto-advance if 3 darts thrown
-    if (newDartsInRound.length === 3) {
-      const entry: RoundEntry = {
-        participantId: player.participantId,
-        roundNumber: state.currentRound,
-        throws: newDartsInRound,
-        actualThrows: 3,
-        isBust: false,
-        scoreDeducted: 0,
-        snapshot: { ...updatedPlayer.score },
-      };
-
-      const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
-      const nextRound = nextPlayerIndex === 0 ? state.currentRound + 1 : state.currentRound;
-
-      return {
-        ...newState,
-        currentPlayerIndex: nextPlayerIndex,
-        currentRound: nextRound,
-        currentDartsInRound: [],
-        roundHistory: [...state.roundHistory, entry],
-      };
-    }
-
+    // Keep all three darts visible until the player confirms the turn with
+    // "Next Round", giving them a chance to verify or undo the score.
     return newState;
   },
 

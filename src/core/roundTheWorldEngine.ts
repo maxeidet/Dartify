@@ -60,75 +60,7 @@ export const roundTheWorldEngine: GameModeEngine<RoundTheWorldConfig> = {
             currentDartsInRound: newDartsInRound,
         };
 
-        // Auto-advance if 3 darts thrown
-        if (newDartsInRound.length === 3) {
-            // Now advance the target
-            const nextTargetIndex = targetIndex + 1;
-            const nextTarget = nextTargetIndex < sequence.length ? sequence[nextTargetIndex] : null;
-
-            // Update player's target for their next turn
-            updatedPlayer = {
-                ...updatedPlayer,
-                score: {
-                    ...updatedPlayer.score,
-                    targetIndex: nextTargetIndex,
-                    currentTarget: nextTarget || expectedTarget, // keep last target if finished
-                }
-            };
-
-            updatedPlayers = newState.players.map((p, i) =>
-                i === state.currentPlayerIndex ? updatedPlayer : p
-            );
-
-            newState = { ...newState, players: updatedPlayers };
-
-            const entry: RoundEntry = {
-                participantId: player.participantId,
-                roundNumber: state.currentRound,
-                throws: newDartsInRound,
-                actualThrows: 3,
-                isBust: false,
-                scoreDeducted: 0,
-                snapshot: { ...updatedPlayer.score },
-            };
-
-            const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
-            const nextRound = nextPlayerIndex === 0 ? state.currentRound + 1 : state.currentRound;
-
-            // Check if game is completely finished (last player threw their last dart on the last target)
-            const isLastPlayer = state.currentPlayerIndex === state.players.length - 1;
-            const isLastTarget = nextTargetIndex >= sequence.length;
-
-            if (isLastPlayer && isLastTarget) {
-                // Game over. Find winner (highest points)
-                let winnerId = updatedPlayers[0].participantId;
-                let maxPoints = updatedPlayers[0].score.points as number;
-                for (let i = 1; i < updatedPlayers.length; i++) {
-                    const pts = updatedPlayers[i].score.points as number;
-                    if (pts > maxPoints) {
-                        maxPoints = pts;
-                        winnerId = updatedPlayers[i].participantId;
-                    }
-                }
-
-                return {
-                    ...newState,
-                    status: 'finished',
-                    winnerId: winnerId,
-                    currentDartsInRound: [],
-                    roundHistory: [...state.roundHistory, entry],
-                };
-            }
-
-            return {
-                ...newState,
-                currentPlayerIndex: nextPlayerIndex,
-                currentRound: nextRound,
-                currentDartsInRound: [],
-                roundHistory: [...state.roundHistory, entry],
-            };
-        }
-
+        // The turn is committed only when the player presses "Next Round".
         return newState;
     },
 
@@ -137,8 +69,69 @@ export const roundTheWorldEngine: GameModeEngine<RoundTheWorldConfig> = {
     },
 
     advanceRound(state: GameState): GameState {
-        // Not used directly if applyThrow auto-advances, but required by interface
-        return state;
+        const config = state.config as RoundTheWorldConfig;
+        const player = state.players[state.currentPlayerIndex];
+        const sequence = Array.from({ length: 20 }, (_, i) => i + 1);
+        if (config.includesBull) sequence.push(25);
+
+        const targetIndex = player.score.targetIndex as number;
+        const nextTargetIndex = targetIndex + 1;
+        const nextTarget = sequence[nextTargetIndex];
+        const remainingMisses = 3 - state.currentDartsInRound.length;
+        const missDarts: DartThrow[] = Array(remainingMisses).fill({
+            segment: 0 as const,
+            multiplier: 1 as const,
+        });
+        const allDarts = [...state.currentDartsInRound, ...missDarts];
+
+        const updatedPlayer: PlayerState = {
+            ...player,
+            dartsThrown: player.dartsThrown + remainingMisses,
+            score: {
+                ...player.score,
+                targetIndex: nextTargetIndex,
+                currentTarget: nextTarget ?? sequence[targetIndex],
+            },
+        };
+        const updatedPlayers = state.players.map((p, i) =>
+            i === state.currentPlayerIndex ? updatedPlayer : p,
+        );
+        const entry: RoundEntry = {
+            participantId: player.participantId,
+            roundNumber: state.currentRound,
+            throws: allDarts,
+            actualThrows: state.currentDartsInRound.length,
+            isBust: false,
+            scoreDeducted: 0,
+            snapshot: { ...updatedPlayer.score },
+        };
+
+        const isLastPlayer = state.currentPlayerIndex === state.players.length - 1;
+        const isLastTarget = nextTargetIndex >= sequence.length;
+        if (isLastPlayer && isLastTarget) {
+            const winner = updatedPlayers.reduce((best, candidate) =>
+                (candidate.score.points as number) > (best.score.points as number) ? candidate : best,
+            );
+
+            return {
+                ...state,
+                status: 'finished',
+                winnerId: winner.participantId,
+                players: updatedPlayers,
+                currentDartsInRound: [],
+                roundHistory: [...state.roundHistory, entry],
+            };
+        }
+
+        const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+        return {
+            ...state,
+            players: updatedPlayers,
+            currentPlayerIndex: nextPlayerIndex,
+            currentRound: nextPlayerIndex === 0 ? state.currentRound + 1 : state.currentRound,
+            currentDartsInRound: [],
+            roundHistory: [...state.roundHistory, entry],
+        };
     }
 };
 
