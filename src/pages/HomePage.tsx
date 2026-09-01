@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
+import { useHistoryStore, computeX01Avg, computeHighOut, computeBestLeg } from '../store/historyStore';
 import type { Participant, X01Config, AroundTheClockConfig } from '../core/types';
 import { X } from 'lucide-react';
 import bdcLogo from '../assets/bdc-logo-transparent.png';
@@ -31,7 +32,13 @@ function RingsEmblem({ size = 52 }: { size?: number }) {
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { startLocalGame, gameState } = useGameStore();
+  const { gameState, startLocalGame } = useGameStore();
+  const { gameHistory } = useHistoryStore();
+
+  // Computed stats
+  const x01Avg = computeX01Avg(gameHistory);
+  const highOut = computeHighOut(gameHistory);
+  const bestLeg = computeBestLeg(gameHistory);
 
   const [showX01Setup, setShowX01Setup] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>([]);
@@ -146,27 +153,30 @@ export function HomePage() {
         </div>
 
         {/* Stats Panel */}
-        <div className="relative bg-panel border border-line border-t-[3px] border-t-forest rounded-[18px] p-[20px_18px_18px] flex">
+        <div
+          onClick={() => navigate('/stats')}
+          className="relative bg-panel border border-line rounded-[18px] p-[20px_18px_18px] flex cursor-pointer hover:border-gold transition-colors"
+        >
 
           <div className="flex-1 px-1.5">
             <div className="font-sans font-extrabold text-[26px] text-forest flex items-baseline gap-0.5 tabular-nums">
-              12
+              {x01Avg > 0 ? x01Avg : '—'}
             </div>
-            <div className="mt-1.5 text-[9.5px] font-bold tracking-[1.6px] text-muted uppercase">Matches</div>
-          </div>
-
-          <div className="flex-1 px-1.5 border-l border-line">
-            <div className="font-sans font-extrabold text-[26px] text-forest flex items-baseline gap-0.5 tabular-nums">
-              67<span className="text-[13px] text-muted font-medium">%</span>
-            </div>
-            <div className="mt-1.5 text-[9.5px] font-bold tracking-[1.6px] text-muted uppercase">Win Rate</div>
+            <div className="mt-1.5 text-[9.5px] font-bold tracking-[1.6px] text-muted uppercase">Avg (X01)</div>
           </div>
 
           <div className="flex-1 px-1.5 border-l border-line">
             <div className="font-sans font-extrabold text-[26px] text-gold-deep flex items-baseline gap-0.5 tabular-nums">
-              112
+              {highOut > 0 ? highOut : '—'}
             </div>
             <div className="mt-1.5 text-[9.5px] font-bold tracking-[1.6px] text-muted uppercase">High Out</div>
+          </div>
+
+          <div className="flex-1 px-1.5 border-l border-line">
+            <div className="font-sans font-extrabold text-[26px] text-forest flex items-baseline gap-0.5 tabular-nums">
+              {bestLeg !== null ? bestLeg : '—'}
+            </div>
+            <div className="mt-1.5 text-[9.5px] font-bold tracking-[1.6px] text-muted uppercase">Best Leg</div>
           </div>
 
         </div>

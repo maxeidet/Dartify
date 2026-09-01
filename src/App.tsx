@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { HomePage } from './pages/HomePage';
 import { GamePage } from './pages/GamePage';
 import { AuthPage } from './pages/AuthPage';
+import { StatsPage } from './pages/StatsPage';
 import { useAuthStore } from './store/authStore';
 import './index.css';
 
@@ -48,6 +49,14 @@ export default function App() {
                 <GamePage />
               </ProtectedRoute>
             } 
+          />
+          <Route
+            path="/stats"
+            element={
+              <ProtectedRoute>
+                <StatsPage />
+              </ProtectedRoute>
+            }
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

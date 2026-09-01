@@ -12,6 +12,8 @@ import { createAroundTheClockGame } from '../core/aroundTheClockEngine';
 import { createRoundTheWorldGame } from '../core/roundTheWorldEngine';
 import type { X01Config, AroundTheClockConfig, RoundTheWorldConfig } from '../core/types';
 import { supabase, isOnlineModeAvailable } from '../lib/supabase';
+import { useHistoryStore } from './historyStore';
+import type { GameSummary } from './historyStore';
 
 // ─────────────────────────────────────────────
 // Store Interface
@@ -82,8 +84,27 @@ async function syncMatchFinishedToSupabase(
 }
 
 // ─────────────────────────────────────────────
-// Store
+// History helper
 // ─────────────────────────────────────────────
+
+function recordFinishedGame(state: GameState): void {
+  const summary: GameSummary = {
+    matchId: state.matchId,
+    gameMode: state.gameMode,
+    date: new Date().toISOString(),
+    config: state.config,
+    players: state.players.map((p) => ({
+      participantId: p.participantId,
+      displayName: p.displayName,
+      dartsThrown: p.dartsThrown,
+      winner: p.participantId === state.winnerId,
+      finalScore: { ...p.score },
+    })),
+    roundHistory: state.roundHistory,
+    totalRounds: state.currentRound,
+  };
+  useHistoryStore.getState().addGame(summary);
+}
 
 export const useGameStore = create<GameStore>()(
   persist(
@@ -125,6 +146,11 @@ export const useGameStore = create<GameStore>()(
         const newState = engine.applyThrow(gameState, dart);
 
         set({ gameState: newState });
+
+        // Record finished game to local history
+        if (newState.status === 'finished') {
+          recordFinishedGame(newState);
+        }
 
         // Sync to Supabase if online
         if (isOnlineMatch && matchId) {
@@ -248,6 +274,11 @@ export const useGameStore = create<GameStore>()(
         const engine = getEngine(gameState.gameMode);
         const newState = engine.advanceRound(gameState);
         set({ gameState: newState });
+
+        // Record finished game to local history
+        if (newState.status === 'finished') {
+          recordFinishedGame(newState);
+        }
       },
 
       resetGame: () => {
