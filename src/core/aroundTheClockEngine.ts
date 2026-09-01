@@ -1,6 +1,6 @@
 // ============================================================
 // Around the Clock Game Mode Engine
-// Pure TypeScript — no React, no side effects
+// Pure TypeScript — no React 
 // ============================================================
 
 import type {
@@ -27,13 +27,13 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
   applyThrow(state: GameState, throw_: DartThrow): GameState {
     const config = state.config as AroundTheClockConfig;
     const player = state.players[state.currentPlayerIndex];
-    
+
     // Construct the sequence
     const sequence = Array.from({ length: 20 }, (_, i) => i + 1);
     if (config.includesBull) {
       sequence.push(25);
     }
-    
+
     const targetIndex = player.score.targetIndex as number;
     const expectedTarget = sequence[targetIndex];
 
@@ -51,7 +51,7 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
     let newTargetIndex = targetIndex;
     let newTargetsHit = player.score.targetsHit as number;
     let newCurrentTarget = expectedTarget;
-    
+
     if (isHit) {
       newTargetIndex++;
       newTargetsHit++;
@@ -59,7 +59,7 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
     }
 
     const newDartsInRound = [...state.currentDartsInRound, throw_];
-    
+
     const updatedPlayer: PlayerState = {
       ...player,
       dartsThrown: player.dartsThrown + 1,
@@ -133,7 +133,7 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
     const config = state.config as AroundTheClockConfig;
     const player = state.players.find((p) => p.participantId === playerId);
     if (!player) return false;
-    
+
     const targetIndex = player.score.targetIndex as number;
     const maxTargets = 20 + (config.includesBull ? 1 : 0);
     return targetIndex >= maxTargets;
@@ -141,7 +141,7 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
 
   advanceRound(state: GameState): GameState {
     const player = state.players[state.currentPlayerIndex];
-    
+
     const remainingMisses = 3 - state.currentDartsInRound.length;
     const missDarts: DartThrow[] = Array(remainingMisses).fill({
       segment: 0 as const,
@@ -154,7 +154,7 @@ export const aroundTheClockEngine: GameModeEngine<AroundTheClockConfig> = {
       ...player,
       dartsThrown: player.dartsThrown + dartsThrownThisRound,
     };
-    
+
     const updatedPlayers = state.players.map((p, i) =>
       i === state.currentPlayerIndex ? updatedPlayer : p,
     );

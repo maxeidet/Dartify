@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import type { Participant, X01Config, AroundTheClockConfig } from '../core/types';
 import { X } from 'lucide-react';
 import bdcLogo from '../assets/bdc-logo-transparent.png';
+import { PlayerSelector, SelectedPlayer } from '../components/shared/PlayerSelector';
 
 function RingsEmblem({ size = 52 }: { size?: number }) {
   const layers = [
@@ -33,7 +34,7 @@ export function HomePage() {
   const { startLocalGame, gameState } = useGameStore();
 
   const [showX01Setup, setShowX01Setup] = useState(false);
-  const [playerNames, setPlayerNames] = useState(['Player 1', 'Player 2']);
+  const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>([]);
   const [numPlayers, setNumPlayers] = useState(2);
   const [startingScore, setStartingScore] = useState<301 | 501 | 701>(501);
   const [doubleOut, setDoubleOut] = useState(true);
@@ -44,10 +45,15 @@ export function HomePage() {
   const [atcIncludesBull, setAtcIncludesBull] = useState(true);
 
   const handleStart = () => {
-    const participants: Participant[] = playerNames.slice(0, numPlayers).map((name, i) => ({
-      id: `player-${i + 1}`,
-      type: 'local',
-      displayName: name || `Player ${i + 1}`,
+    if (selectedPlayers.length !== numPlayers) {
+      alert(`Please select ${numPlayers} players`);
+      return;
+    }
+
+    const participants: Participant[] = selectedPlayers.map((p, i) => ({
+      id: p.id,
+      type: 'local', // In a local game, all players are considered local to this device
+      displayName: p.name,
       displayOrder: i,
     }));
 
@@ -64,10 +70,15 @@ export function HomePage() {
   };
 
   const handleStartATC = () => {
-    const participants: Participant[] = playerNames.slice(0, numPlayers).map((name, i) => ({
-      id: `player-${i + 1}`,
+    if (selectedPlayers.length !== numPlayers) {
+      alert(`Please select ${numPlayers} players`);
+      return;
+    }
+
+    const participants: Participant[] = selectedPlayers.map((p, i) => ({
+      id: p.id,
       type: 'local',
-      displayName: name || `Player ${i + 1}`,
+      displayName: p.name,
       displayOrder: i,
     }));
 
@@ -310,29 +321,13 @@ export function HomePage() {
               {/* Player Names */}
               <div className="flex flex-col gap-2">
                 <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Names
+                  Select Players ({selectedPlayers.length} / {numPlayers})
                 </label>
-                <div className="flex flex-col gap-2">
-                  {Array.from({ length: numPlayers }).map((_, i) => (
-                    <input
-                      key={i}
-                      type="text"
-                      placeholder={`Player ${i + 1}`}
-                      value={playerNames[i] ?? ''}
-                      onChange={(e) => {
-                        const updated = [...playerNames];
-                        updated[i] = e.target.value;
-                        setPlayerNames(updated);
-                      }}
-                      className="
-                        w-full px-4 py-3.5 rounded-xl bg-panel border border-line
-                        text-forest-deep placeholder-muted text-sm font-sans font-semibold
-                        focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold
-                        transition-all
-                      "
-                    />
-                  ))}
-                </div>
+                <PlayerSelector 
+                  numPlayers={numPlayers} 
+                  selectedPlayers={selectedPlayers} 
+                  onChange={setSelectedPlayers} 
+                />
               </div>
 
               {/* Rules */}
@@ -433,29 +428,13 @@ export function HomePage() {
               {/* Player Names */}
               <div className="flex flex-col gap-2">
                 <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Names
+                  Select Players ({selectedPlayers.length} / {numPlayers})
                 </label>
-                <div className="flex flex-col gap-2">
-                  {Array.from({ length: numPlayers }).map((_, i) => (
-                    <input
-                      key={i}
-                      type="text"
-                      placeholder={`Player ${i + 1}`}
-                      value={playerNames[i] ?? ''}
-                      onChange={(e) => {
-                        const updated = [...playerNames];
-                        updated[i] = e.target.value;
-                        setPlayerNames(updated);
-                      }}
-                      className="
-                        w-full px-4 py-3.5 rounded-xl bg-panel border border-line
-                        text-forest-deep placeholder-muted text-sm font-sans font-semibold
-                        focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold
-                        transition-all
-                      "
-                    />
-                  ))}
-                </div>
+                <PlayerSelector 
+                  numPlayers={numPlayers} 
+                  selectedPlayers={selectedPlayers} 
+                  onChange={setSelectedPlayers} 
+                />
               </div>
 
               {/* Game Settings */}
