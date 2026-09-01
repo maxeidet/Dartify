@@ -44,6 +44,9 @@ export function HomePage() {
   const [atcHitType, setAtcHitType] = useState<'singles' | 'any'>('any');
   const [atcIncludesBull, setAtcIncludesBull] = useState(true);
 
+  const [showRTWSetup, setShowRTWSetup] = useState(false);
+  const [rtwIncludesBull, setRtwIncludesBull] = useState(true);
+
   const handleStart = () => {
     if (selectedPlayers.length !== numPlayers) {
       alert(`Please select ${numPlayers} players`);
@@ -89,6 +92,28 @@ export function HomePage() {
     };
 
     startLocalGame(participants, config);
+    navigate('/game');
+  };
+
+  const handleStartRTW = () => {
+    if (selectedPlayers.length !== numPlayers) {
+      alert(`Please select ${numPlayers} players`);
+      return;
+    }
+
+    const participants: Participant[] = selectedPlayers.map((p, i) => ({
+      id: p.id,
+      type: 'local',
+      displayName: p.name,
+      displayOrder: i,
+    }));
+
+    const config = {
+      mode: 'round_the_world',
+      includesBull: rtwIncludesBull,
+    };
+
+    startLocalGame(participants, config as any);
     navigate('/game');
   };
 
@@ -228,6 +253,24 @@ export function HomePage() {
             </div>
             <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">Around Clock</h3>
             <p className="mt-1 text-xs text-muted">Hit 1 to 20</p>
+          </div>
+
+          {/* ROUND THE WORLD */}
+          <div
+            onClick={() => setShowRTWSetup(true)}
+            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(15,58,34,0.08)] group overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
+
+            <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1A5833" strokeWidth="1.6" strokeLinecap="round" className="w-5 h-5">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 3 v18" />
+                <path d="M3 12 h18" />
+              </svg>
+            </div>
+            <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">Round World</h3>
+            <p className="mt-1 text-xs text-muted">Score points on targets</p>
           </div>
 
           {/* CRICKET */}
@@ -493,6 +536,109 @@ export function HomePage() {
             <div className="p-6 bg-panel border-t border-line">
               <button
                 onClick={handleStartATC}
+                className="
+                  w-full py-4 rounded-xl bg-gold
+                  font-sans font-bold text-lg text-white
+                  hover:bg-gold-deep active:scale-[0.98] transition-all duration-200
+                  shadow-[0_4px_14px_rgba(191,164,100,0.4)]
+                "
+              >
+                START MATCH
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* RTW Setup Modal */}
+      {showRTWSetup && (
+        <div className="fixed inset-0 z-50 bg-forest-deep/60 backdrop-blur-md flex flex-col justify-end animate-in fade-in duration-200">
+
+          <div className="bg-cream rounded-t-[28px] w-full max-w-md mx-auto overflow-hidden shadow-2xl flex flex-col h-[90vh] animate-in slide-in-from-bottom-8 duration-300">
+
+            <div className="flex justify-between items-center p-6 pb-2 border-b border-line bg-panel">
+              <h2 className="font-display font-black text-[22px] text-forest-deep">Setup Round The World</h2>
+              <button
+                onClick={() => setShowRTWSetup(false)}
+                className="w-8 h-8 rounded-full bg-cream flex items-center justify-center text-muted hover:text-forest transition-colors"
+              >
+                <X size={18} strokeWidth={2} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+
+              {/* Number of players */}
+              <div className="flex flex-col gap-2">
+                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
+                  Players
+                </label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setNumPlayers(n)}
+                      className={`
+                        flex-1 py-3 rounded-xl border font-sans font-extrabold text-lg transition-all
+                        ${numPlayers === n
+                          ? 'bg-forest border-forest text-white shadow-md'
+                          : 'bg-panel border-line text-muted hover:border-gold'
+                        }
+                      `}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Player Names */}
+              <div className="flex flex-col gap-2">
+                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
+                  Select Players ({selectedPlayers.length} / {numPlayers})
+                </label>
+                <PlayerSelector 
+                  numPlayers={numPlayers} 
+                  selectedPlayers={selectedPlayers} 
+                  onChange={setSelectedPlayers} 
+                />
+              </div>
+
+              {/* Game Settings */}
+              <div className="flex flex-col gap-2">
+                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
+                  Game Mode Settings
+                </label>
+                
+                <div className="flex flex-col gap-2">
+                  <div
+                    onClick={() => setRtwIncludesBull(!rtwIncludesBull)}
+                    className="flex items-center justify-between p-4 rounded-xl bg-panel border border-line cursor-pointer hover:border-gold transition-colors"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-forest-deep">Include Bullseye</span>
+                      <span className="text-[11px] font-medium text-muted mt-0.5">End the game on 25</span>
+                    </div>
+                    <div className={`
+                      w-11 h-6 rounded-full relative transition-colors duration-300
+                      ${rtwIncludesBull ? 'bg-forest' : 'bg-line'}
+                    `}>
+                      <div className={`
+                        absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm
+                        ${rtwIncludesBull ? 'left-6' : 'left-1'}
+                      `} />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="p-6 bg-panel border-t border-line">
+              <button
+                onClick={handleStartRTW}
                 className="
                   w-full py-4 rounded-xl bg-gold
                   font-sans font-bold text-lg text-white

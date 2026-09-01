@@ -80,7 +80,7 @@ export function ScoringView({
             dartsInRound={dartsInRound}
             canUndo={canUndo}
             disabled={disabled}
-            currentTarget={gameMode === 'around_the_clock' ? currentTarget : undefined}
+            currentTarget={['around_the_clock', 'round_the_world'].includes(gameMode || '') ? currentTarget : undefined}
           />
         ) : (
           <div className="flex flex-col h-full overflow-y-auto">

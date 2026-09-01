@@ -6,6 +6,7 @@
 import type { GameModeEngine, GameConfig } from './types';
 import { x01Engine } from './x01Engine';
 import { aroundTheClockEngine } from './aroundTheClockEngine';
+import { roundTheWorldEngine } from './roundTheWorldEngine';
 // Future: import { cricketEngine } from './cricketEngine';
 
 const registry = new Map<string, GameModeEngine<GameConfig>>();
@@ -17,6 +18,7 @@ function register(engine: GameModeEngine<GameConfig>) {
 // Register all known modes
 register(x01Engine as GameModeEngine<GameConfig>);
 register(aroundTheClockEngine as GameModeEngine<GameConfig>);
+register(roundTheWorldEngine as GameModeEngine<GameConfig>);
 // register(cricketEngine);
 
 /**

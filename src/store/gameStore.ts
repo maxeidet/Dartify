@@ -10,7 +10,8 @@ import { throwScore } from '../core/types';
 import { getEngine } from '../core/gameModeRegistry';
 import { createX01Game } from '../core/x01Engine';
 import { createAroundTheClockGame } from '../core/aroundTheClockEngine';
-import type { X01Config, AroundTheClockConfig } from '../core/types';
+import { createRoundTheWorldGame } from '../core/roundTheWorldEngine';
+import type { X01Config, AroundTheClockConfig, RoundTheWorldConfig } from '../core/types';
 import { supabase, isOnlineModeAvailable } from '../lib/supabase';
 
 // ─────────────────────────────────────────────
@@ -104,6 +105,8 @@ export const useGameStore = create<GameStore>()(
           gameState = createX01Game(matchId, participants, config as X01Config);
         } else if (config.mode === 'around_the_clock') {
           gameState = createAroundTheClockGame(matchId, participants, config as AroundTheClockConfig);
+        } else if (config.mode === 'round_the_world') {
+          gameState = createRoundTheWorldGame(matchId, participants, config as RoundTheWorldConfig);
         } else {
           throw new Error(`Unsupported game mode: ${config.mode}`);
         }

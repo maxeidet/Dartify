@@ -98,7 +98,7 @@ export interface GameState {
 // Add new modes here without touching the engine
 // ─────────────────────────────────────────────
 
-export type GameConfig = X01Config | AroundTheClockConfig | CricketConfig;
+export type GameConfig = X01Config | AroundTheClockConfig | RoundTheWorldConfig | CricketConfig;
 
 export interface X01Config {
   mode: 'x01';
@@ -119,6 +119,12 @@ export interface CricketConfig {
   mode: 'cricket';
   targets: (15 | 16 | 17 | 18 | 19 | 20 | 25)[];
   cutThroat: boolean;
+}
+
+export interface RoundTheWorldConfig {
+  mode: 'round_the_world';
+  hitType: 'singles' | 'any';
+  includesBull: boolean;
 }
 
 // ─────────────────────────────────────────────
