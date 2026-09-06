@@ -19,7 +19,7 @@ import type { GameSummary } from './historyStore';
 // Store Interface
 // ─────────────────────────────────────────────
 
-export type ScoringMode = 'grid' | 'dartboard';
+export type ScoringMode = 'grid' | 'dartboard' | 'camera';
 
 interface GameStore {
   // Current game state (null when not in a match)
