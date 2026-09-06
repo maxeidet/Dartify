@@ -215,20 +215,38 @@ export function GamePage() {
       </header>
 
       {/* ── Score cards ── */}
-      <div className={`px-3 pt-2 ${gameState.players.length > 1 ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}`}>
-        {gameState.players.map((player, idx) => (
-          <ScoreDisplay
-            key={player.participantId}
-            player={player}
-            isCurrentPlayer={idx === gameState.currentPlayerIndex}
-            checkoutHint={idx === gameState.currentPlayerIndex ? checkoutHint : null}
-            dartsInRound={idx === gameState.currentPlayerIndex ? gameState.currentDartsInRound.length : 0}
-            startingScore={startingScore}
-            gameMode={gameState.gameMode}
-            isBust={gameState.gameMode === 'x01' && idx === gameState.currentPlayerIndex && gameState.isCurrentRoundBust}
-          />
-        ))}
-      </div>
+      {gameState.players.length >= 3 ? (
+        <div className="flex gap-2 px-3 pt-2 overflow-x-auto scrollbar-none snap-x snap-mandatory">
+          {gameState.players.map((player, idx) => (
+            <ScoreDisplay
+              key={player.participantId}
+              player={player}
+              isCurrentPlayer={idx === gameState.currentPlayerIndex}
+              checkoutHint={idx === gameState.currentPlayerIndex ? checkoutHint : null}
+              dartsInRound={idx === gameState.currentPlayerIndex ? gameState.currentDartsInRound.length : 0}
+              startingScore={startingScore}
+              gameMode={gameState.gameMode}
+              isBust={gameState.gameMode === 'x01' && idx === gameState.currentPlayerIndex && gameState.isCurrentRoundBust}
+              compact
+            />
+          ))}
+        </div>
+      ) : (
+        <div className={`px-3 pt-2 ${gameState.players.length > 1 ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}`}>
+          {gameState.players.map((player, idx) => (
+            <ScoreDisplay
+              key={player.participantId}
+              player={player}
+              isCurrentPlayer={idx === gameState.currentPlayerIndex}
+              checkoutHint={idx === gameState.currentPlayerIndex ? checkoutHint : null}
+              dartsInRound={idx === gameState.currentPlayerIndex ? gameState.currentDartsInRound.length : 0}
+              startingScore={startingScore}
+              gameMode={gameState.gameMode}
+              isBust={gameState.gameMode === 'x01' && idx === gameState.currentPlayerIndex && gameState.isCurrentRoundBust}
+            />
+          ))}
+        </div>
+      )}
 
       {/* ── Voice + History row ── */}
       <div className="flex items-center justify-between px-3 py-1.5 z-10 relative">

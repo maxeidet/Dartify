@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHistoryStore, computeX01Avg, computeHighOut, computeBestLeg } from '../store/historyStore';
 import type { GameSummary } from '../store/historyStore';
+import { PlayerStatsModal } from '../components/game/PlayerStatsModal';
 
 type ModeFilter = 'all' | 'x01' | 'around_the_clock' | 'round_the_world';
 
@@ -28,14 +29,17 @@ function formatTime(iso: string): string {
   return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
-function GameCard({ game }: { game: GameSummary }) {
+function GameCard({ game, onClick }: { game: GameSummary; onClick: () => void }) {
   const winner = game.players.find((p) => p.winner);
   const modeLabel = MODE_LABELS[game.gameMode] ?? game.gameMode;
 
   return (
-    <div className="bg-panel border border-line rounded-[18px] p-4 flex flex-col gap-3">
+    <button 
+      onClick={onClick}
+      className="bg-panel border border-line rounded-[18px] p-4 flex flex-col gap-3 text-left transition-colors hover:border-gold active:scale-[0.98]"
+    >
       {/* Header row */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full">
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-forest/10 border border-forest/20 text-forest-deep font-sans font-bold text-[10px] tracking-[1.4px] uppercase">
           {modeLabel}
         </span>
@@ -45,7 +49,7 @@ function GameCard({ game }: { game: GameSummary }) {
       </div>
 
       {/* Players */}
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 w-full">
         {game.players.map((p) => (
           <div key={p.participantId} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -65,7 +69,7 @@ function GameCard({ game }: { game: GameSummary }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-line pt-2.5">
+      <div className="flex items-center justify-between border-t border-line pt-2.5 w-full">
         <span className="text-[10px] text-muted font-medium">
           {game.totalRounds} rounds
         </span>
@@ -75,7 +79,7 @@ function GameCard({ game }: { game: GameSummary }) {
           </span>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -84,6 +88,7 @@ export function StatsPage() {
   const { gameHistory, clearHistory } = useHistoryStore();
   const [filter, setFilter] = useState<ModeFilter>('all');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<GameSummary | null>(null);
 
   const filtered = filter === 'all'
     ? gameHistory
@@ -180,7 +185,11 @@ export function StatsPage() {
             </div>
           ) : (
             filtered.map((game) => (
-              <GameCard key={game.matchId} game={game} />
+              <GameCard 
+                key={game.matchId} 
+                game={game} 
+                onClick={() => setSelectedGame(game)}
+              />
             ))
           )}
         </div>
@@ -210,6 +219,15 @@ export function StatsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Player Stats Modal */}
+      {selectedGame && (
+        <PlayerStatsModal
+          game={selectedGame}
+          initialPlayerId={selectedGame.players[0].participantId}
+          onClose={() => setSelectedGame(null)}
+        />
       )}
     </div>
   );

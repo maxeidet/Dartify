@@ -9,6 +9,7 @@ interface ScoreDisplayProps {
   startingScore?: number;
   gameMode?: string;
   isBust?: boolean;
+  compact?: boolean;
 }
 
 export function ScoreDisplay({
@@ -19,6 +20,7 @@ export function ScoreDisplay({
   startingScore,
   gameMode,
   isBust = false,
+  compact = false,
 }: ScoreDisplayProps) {
   const prevScore = useRef<number | string | null>(null);
   const [animate, setAnimate] = useState(false);
@@ -46,13 +48,17 @@ export function ScoreDisplay({
     statsText = `Target: ${target === 25 ? 'BULL' : target} | Hit Rate ${hitRate}%`;
   } else {
     mainScore = player.score.scoreLeft as number;
-    // Show average points per dart for the first round, then per 3 darts.
-    const multiplier = player.dartsThrown <= 3 ? 1 : 3;
+    // Dart averages in X01 are conventionally shown over three darts,
+    // including during the first visit.
     const avg = typeof startingScore === 'number' && player.dartsThrown > 0
-      ? Math.round(((startingScore - (mainScore as number)) / player.dartsThrown) * multiplier * 10) / 10
+      ? Math.round(((startingScore - (mainScore as number)) / player.dartsThrown) * 3 * 10) / 10
       : 0;
     statsText = `Avg ${avg}`;
   }
+
+  const compactDetail = isCurrentPlayer && checkoutHint
+    ? `Out: ${checkoutHint}`
+    : statsText;
 
   useEffect(() => {
     if (prevScore.current !== null && prevScore.current !== mainScore) {
@@ -64,6 +70,79 @@ export function ScoreDisplay({
       prevScore.current = mainScore;
     }
   }, [mainScore]);
+
+  if (compact) {
+    return (
+      <div
+        className={`
+          snap-start flex-1 shrink-0 flex flex-col items-center gap-1
+          rounded-[14px] px-3 py-2 transition-all duration-300 relative overflow-hidden
+          min-w-[80px]
+          ${isCurrentPlayer
+            ? `bg-panel border-[1.5px] shadow-[0_4px_16px_rgba(15,58,34,0.06)] ${isBust ? 'border-[#A63B37] score-card-bust' : 'border-forest'}`
+            : 'bg-cream border border-line opacity-70 shadow-sm'
+          }
+        `}
+      >
+        {/* Avatar */}
+        <div
+          className={`
+            w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0
+            ${isCurrentPlayer ? 'bg-forest text-white' : 'bg-line text-muted'}
+          `}
+        >
+          {player.avatarUrl
+            ? <img src={player.avatarUrl} className="w-7 h-7 rounded-full object-cover" alt={player.displayName} />
+            : player.displayName.charAt(0).toUpperCase()
+          }
+        </div>
+
+        {/* Name */}
+        <p className={`font-sans font-bold text-[9px] leading-none truncate w-full text-center ${isCurrentPlayer ? 'text-forest-deep' : 'text-muted'}`}>
+          {player.displayName}
+        </p>
+
+        {/* Main score */}
+        <div
+          className={`
+            font-display font-black leading-none
+            ${animate ? 'score-count-enter' : ''}
+            ${isBust ? 'score-crack' : ''}
+            ${isCurrentPlayer ? 'text-forest-deep' : 'text-muted'}
+          `}
+          style={{ fontSize: 'clamp(1.4rem, 5vw, 1.75rem)' }}
+        >
+          {mainScore}
+        </div>
+
+        {/* Compact cards are used for 3+ player games. Keep the average
+            visible, or replace it with the active player's checkout route. */}
+        <p
+          className={`min-h-[1.25rem] w-full px-0.5 text-center text-[8px] font-bold uppercase leading-[0.6rem] ${
+            isCurrentPlayer && checkoutHint ? 'text-gold-deep' : 'text-muted'
+          }`}
+        >
+          {compactDetail}
+        </p>
+
+        {/* Darts dots */}
+        {isCurrentPlayer && (
+          <div className="flex gap-1 items-center justify-center">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className={`
+                  w-1.5 h-1.5 rounded-full transition-all duration-200
+                  ${i < dartsInRound ? 'bg-forest scale-110' : 'bg-line'}
+                `}
+              />
+            ))}
+          </div>
+        )}
+
+      </div>
+    );
+  }
 
   return (
     <div

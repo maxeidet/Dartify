@@ -330,3 +330,12 @@ body {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--color-cream); }
 ::-webkit-scrollbar-thumb { background: var(--color-muted); border-radius: 3px; }
+
+/* Utility to hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
