@@ -145,7 +145,7 @@ export function GamePage() {
             <p className="mt-3 text-sm text-muted">Finished in {winner?.dartsThrown ?? 0} darts thrown</p>
             <div className="mt-6 flex gap-3">
               <button
-                onClick={() => { setWinnerVisible(false); resetGame(); navigate('/'); }}
+                onClick={() => { setWinnerVisible(false); setScoringMode('grid'); resetGame(); navigate('/'); }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line bg-cream px-3 py-3 font-sans text-sm font-bold text-forest transition-colors hover:border-gold hover:bg-panel active:scale-[0.98]"
               >
                 <House size={16} strokeWidth={2.2} />
@@ -154,6 +154,7 @@ export function GamePage() {
               <button
                 onClick={() => {
                   setWinnerVisible(false);
+                  setScoringMode('grid');
                   // Rematch with the same players and rules.
                   const store = useGameStore.getState();
                   store.startLocalGame(
@@ -378,7 +379,7 @@ export function GamePage() {
                 Keep playing
               </button>
               <button
-                onClick={() => { resetGame(); navigate('/'); }}
+                onClick={() => { setScoringMode('grid'); resetGame(); navigate('/'); }}
                 className="flex-1 rounded-xl bg-forest px-4 py-3 font-sans text-sm font-bold text-white shadow-[0_4px_14px_rgba(26,88,51,0.28)] transition-all hover:bg-forest-deep active:scale-[0.98]"
               >
                 Exit game
