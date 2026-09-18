@@ -9,14 +9,15 @@ export const NUM_SEGMENTS = 20;
 export const ANGLE_PER_SEGMENT = (2 * Math.PI) / NUM_SEGMENTS;
 export const HALF_ANGLE = ANGLE_PER_SEGMENT / 2;
 
+// Measured directly off the board photo (src/assets/dartboard-board.webp), as a
+// fraction of the image's half-width, so tap hit-testing lines up with what's drawn.
 export const R = {
-  bullseye: 0.045,
-  bull: 0.095,
-  inner: 0.375,
-  treble1: 0.425,
-  outer: 0.72,
-  double1: 0.79,
-  board: 0.84,
+  bullseye: 0.031,
+  bull: 0.072,
+  inner: 0.431,
+  treble1: 0.472,
+  outer: 0.71,
+  double1: 0.752,
 };
 
 // ─────────────────────────────────────────────

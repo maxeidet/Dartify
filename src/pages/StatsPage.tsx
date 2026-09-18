@@ -99,7 +99,7 @@ export function StatsPage() {
   const bestLeg = computeBestLeg(filtered);
 
   return (
-    <div className="flex flex-col h-screen overflow-y-auto w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),24px)]">
+    <div className="flex flex-col h-dvh overflow-y-auto w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),24px)]">
       <div className="relative px-[22px] pt-[18px] pb-8 z-10 flex flex-col flex-1 max-w-md mx-auto w-full gap-5">
 
         {/* Header */}

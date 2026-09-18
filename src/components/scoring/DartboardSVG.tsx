@@ -2,14 +2,9 @@ import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { DartThrow } from '../../core/types';
 import { throwLabel } from '../../core/types';
+import dartboardImg from '../../assets/dartboard-board.webp';
 
 import {
-  BOARD_ORDER,
-  ANGLE_PER_SEGMENT,
-  HALF_ANGLE,
-  R,
-  polarToCartesian,
-  sectorPath,
   getHitTarget,
   getMarkerPosition
 } from './dartboardMath';
@@ -23,66 +18,21 @@ interface DartboardSVGProps {
 }
 
 // ─────────────────────────────────────────────
-// Colors (Premium Red/Green Theme)
+// Reusable Dartboard SVG Content — a real board photo, cropped tight
+// to its circle. The R.* hit-testing fractions in dartboardMath.ts
+// were measured directly off this same image, so they line up.
 // ─────────────────────────────────────────────
 
-const SINGLE_COLORS = ['#2E332E', '#F8F5EC'] as const; // Ink / Cream
-const DOUBLE_COLORS = ['#9E2A2B', '#1A5833'] as const; // Crimson / Forest
-const TREBLE_COLORS = ['#9E2A2B', '#1A5833'] as const; // Crimson / Forest
-
-// ─────────────────────────────────────────────
-// Reusable Dartboard SVG Content
-// ─────────────────────────────────────────────
-
-export const DartboardContent = React.memo(({ size, cx, cy, scale }: { size: number, cx: number, cy: number, scale: number }) => {
-  const segments: React.ReactNode[] = [];
-
-  BOARD_ORDER.forEach((number, i) => {
-    const startAngle = i * ANGLE_PER_SEGMENT - HALF_ANGLE;
-    const endAngle = startAngle + ANGLE_PER_SEGMENT;
-    const colorIndex = i % 2;
-
-    segments.push(
-      <path key={`single-${number}`} d={sectorPath(cx, cy, R.treble1 * scale, R.outer * scale, startAngle, endAngle)} fill={SINGLE_COLORS[colorIndex]} />
-    );
-    segments.push(
-      <path key={`treble-${number}`} d={sectorPath(cx, cy, R.inner * scale, R.treble1 * scale, startAngle, endAngle)} fill={TREBLE_COLORS[colorIndex]} />
-    );
-    segments.push(
-      <path key={`single-outer-${number}`} d={sectorPath(cx, cy, R.bull * scale, R.inner * scale, startAngle, endAngle)} fill={SINGLE_COLORS[colorIndex]} />
-    );
-    segments.push(
-      <path key={`double-${number}`} d={sectorPath(cx, cy, R.outer * scale, R.double1 * scale, startAngle, endAngle)} fill={DOUBLE_COLORS[colorIndex]} />
-    );
-  });
-
+export const DartboardContent = React.memo(({ cx, cy, scale }: { size: number, cx: number, cy: number, scale: number }) => {
   return (
-    <>
-      <circle cx={cx} cy={cy} r={size / 2} fill="#EDE6D2" />
-      <circle cx={cx} cy={cy} r={R.board * scale} fill="#1a1a1a" />
-      {segments}
-      {/* Wireframe */}
-      <circle cx={cx} cy={cy} r={R.double1 * scale} fill="transparent" stroke="#E5DFCD" strokeWidth="0.5" opacity="0.4" />
-      <circle cx={cx} cy={cy} r={R.treble1 * scale} fill="transparent" stroke="#E5DFCD" strokeWidth="0.5" opacity="0.4" />
-      <circle cx={cx} cy={cy} r={R.inner * scale} fill="transparent" stroke="#E5DFCD" strokeWidth="0.5" opacity="0.4" />
-      <circle cx={cx} cy={cy} r={R.bull * scale} fill="transparent" stroke="#E5DFCD" strokeWidth="0.5" opacity="0.4" />
-      <circle cx={cx} cy={cy} r={R.bullseye * scale} fill="transparent" stroke="#E5DFCD" strokeWidth="0.5" opacity="0.4" />
-
-      {/* Numbers */}
-      {BOARD_ORDER.map((number, i) => {
-        const angle = i * ANGLE_PER_SEGMENT;
-        const pos = polarToCartesian(cx, cy, R.board * scale * 0.94, angle);
-        return (
-          <text key={`label-${number}`} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="central" fill="#E5DFCD" fontSize={size * 0.05} fontFamily="Fraunces, serif" fontWeight="900" className="pointer-events-none">
-            {number}
-          </text>
-        );
-      })}
-      {/* Bullseyes */}
-      <circle cx={cx} cy={cy} r={R.bull * scale} fill="#1A5833" />
-      <circle cx={cx} cy={cy} r={R.bullseye * scale} fill="#9E2A2B" />
-      <circle cx={cx} cy={cy} r={R.bullseye * scale * 0.25} fill="#5C1415" />
-    </>
+    <image
+      href={dartboardImg}
+      x={cx - scale}
+      y={cy - scale}
+      width={scale * 2}
+      height={scale * 2}
+      preserveAspectRatio="xMidYMid slice"
+    />
   );
 });
 
@@ -169,7 +119,7 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
           width={size}
           height={size}
           viewBox={`0 0 ${size} ${size}`}
-          className={`drop-shadow-[0_4px_24px_rgba(15,58,34,0.15)] rounded-full bg-cream transition-opacity ${disabled ? 'opacity-50' : ''} ${isBust ? 'dartboard-bust' : ''}`}
+          className={`drop-shadow-[0_4px_24px_rgba(0, 0, 0, 0.15)] rounded-full bg-cream transition-opacity ${disabled ? 'opacity-50' : ''} ${isBust ? 'dartboard-bust' : ''}`}
         >
           <DartboardContent size={size} cx={cx} cy={cy} scale={scale} />
           {isBust && (
@@ -238,7 +188,7 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
         {/* Magnifying Glass Overlay via Portal */}
         {isDragging && createPortal(
           <div 
-            className="fixed pointer-events-none bg-cream rounded-full overflow-hidden shadow-[0_8px_32px_rgba(15,58,34,0.3)] border-[3px] border-gold"
+            className="fixed pointer-events-none bg-cream rounded-full overflow-hidden shadow-[0_8px_32px_rgba(0, 0, 0, 0.3)] border-[3px] border-gold"
             style={{
               zIndex: 99999,
               width: MAG_SIZE,

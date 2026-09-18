@@ -13,7 +13,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   if (!isInitialized) {
-    return <div className="flex h-screen items-center justify-center bg-[#0a0f1a] text-cream">Loading...</div>;
+    return <div className="flex h-dvh items-center justify-center bg-[#1D1D1F] text-cream">Loading...</div>;
   }
 
   if (!session) {
@@ -32,7 +32,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex flex-col h-screen max-w-md mx-auto overflow-hidden bg-[#0a0f1a]">
+      <div className="flex flex-col h-dvh max-w-md mx-auto overflow-hidden bg-[#1D1D1F]">
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
           <Route 

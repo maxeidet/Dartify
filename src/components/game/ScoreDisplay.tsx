@@ -79,7 +79,7 @@ export function ScoreDisplay({
           rounded-[14px] px-3 py-2 transition-all duration-300 relative overflow-hidden
           min-w-[80px]
           ${isCurrentPlayer
-            ? `bg-panel border-[1.5px] shadow-[0_4px_16px_rgba(15,58,34,0.06)] ${isBust ? 'border-[#A63B37] score-card-bust' : 'border-forest'}`
+            ? `bg-panel border-[1.5px] shadow-[0_4px_16px_rgba(0, 0, 0, 0.06)] ${isBust ? 'border-[#A63B37] score-card-bust' : 'border-forest'}`
             : 'bg-cream border border-line opacity-70 shadow-sm'
           }
         `}
@@ -149,7 +149,7 @@ export function ScoreDisplay({
       className={`
         rounded-[18px] p-3 transition-all duration-300 relative overflow-hidden
         ${isCurrentPlayer
-          ? `bg-panel border-[1.5px] shadow-[0_4px_16px_rgba(15,58,34,0.06)] ${isBust ? 'border-[#A63B37] score-card-bust' : 'border-forest'}`
+          ? `bg-panel border-[1.5px] shadow-[0_4px_16px_rgba(0, 0, 0, 0.06)] ${isBust ? 'border-[#A63B37] score-card-bust' : 'border-forest'}`
           : 'bg-cream border border-line opacity-75 shadow-sm'
         }
       `}
@@ -221,14 +221,16 @@ export function ScoreDisplay({
       </div>
 
       {/* Stats row */}
-      <div className={`flex justify-between text-[9px] font-bold uppercase tracking-[1px] ${isCurrentPlayer ? 'text-forest' : 'text-muted/70'}`}>
-        <span>{player.dartsThrown} darts</span>
-        {checkoutHint && isCurrentPlayer && (
-          <span className="text-gold-deep">
-            ↳ {checkoutHint}
-          </span>
-        )}
-        <span>{statsText}</span>
+      <div className={`flex justify-between items-center min-h-[14px] text-[9px] font-bold uppercase tracking-[1px] ${isCurrentPlayer ? 'text-forest' : 'text-muted/70'}`}>
+        <span className="whitespace-nowrap">{player.dartsThrown} darts</span>
+        <span
+          className={`text-gold-deep whitespace-nowrap truncate px-1 ${
+            checkoutHint && isCurrentPlayer ? '' : 'invisible'
+          }`}
+        >
+          ↳ {checkoutHint}
+        </span>
+        <span className="whitespace-nowrap">{statsText}</span>
       </div>
     </div>
   );

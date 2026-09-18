@@ -27,7 +27,6 @@ interface GameStore {
 
   // UI state
   scoringMode: ScoringMode;
-  isVoiceActive: boolean;
 
   // Online match context (null for local games)
   matchId: string | null;
@@ -40,7 +39,6 @@ interface GameStore {
   nextRound: () => void;
   resetGame: () => void;
   setScoringMode: (mode: ScoringMode) => void;
-  setVoiceActive: (active: boolean) => void;
 }
 
 // ─────────────────────────────────────────────
@@ -111,7 +109,6 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       gameState: null,
       scoringMode: 'grid',
-      isVoiceActive: false,
       matchId: null,
       isOnlineMatch: false,
 
@@ -286,7 +283,6 @@ export const useGameStore = create<GameStore>()(
       },
 
       setScoringMode: (mode) => set({ scoringMode: mode }),
-      setVoiceActive: (active) => set({ isVoiceActive: active }),
     }),
     {
       name: 'dart-game-storage',

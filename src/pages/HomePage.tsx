@@ -10,12 +10,12 @@ import { PlayerSelector, SelectedPlayer } from '../components/shared/PlayerSelec
 
 function RingsEmblem({ size = 52 }: { size?: number }) {
   const layers = [
-    { d: 1.00, c: '#BFA464' },   // gold
-    { d: 0.88, c: '#F8F5EC' },   // cream
-    { d: 0.72, c: '#22291F' },   // ink
-    { d: 0.56, c: '#1A5833' },   // forest
-    { d: 0.42, c: '#F8F5EC' },   // cream
-    { d: 0.28, c: '#22291F' },   // ink
+    { d: 1.00, c: '#86868B' },   // gold
+    { d: 0.88, c: '#F0F0F2' },   // cream
+    { d: 0.72, c: '#1D1D1F' },   // ink
+    { d: 0.56, c: '#1D1D1F' },   // forest
+    { d: 0.42, c: '#F0F0F2' },   // cream
+    { d: 0.28, c: '#1D1D1F' },   // ink
     { d: 0.15, c: '#A63B37' },   // red
   ];
   return (
@@ -127,7 +127,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-y-auto w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)]">
+    <div className="flex flex-col h-dvh overflow-y-auto w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)]">
 
       <div className="relative pt-[26px] px-[22px] pb-12 z-10 flex flex-col flex-1 max-w-md mx-auto w-full">
 
@@ -227,15 +227,15 @@ export function HomePage() {
           {/* X01 */}
           <div
             onClick={() => setShowX01Setup(true)}
-            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(15,58,34,0.08)] group overflow-hidden"
+            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(0, 0, 0, 0.08)] group overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
 
             <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
               <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                <path d="M4 20 L15 9" stroke="#1A5833" strokeWidth="1.6" strokeLinecap="round" />
-                <circle cx="16.5" cy="7.5" r="2" fill="#BFA464" />
-                <path d="M18 6 L21 3 M19 8 L22 7 M17 4 L19 1" stroke="#96793A" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M4 20 L15 9" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" />
+                <circle cx="16.5" cy="7.5" r="2" fill="#86868B" />
+                <path d="M18 6 L21 3 M19 8 L22 7 M17 4 L19 1" stroke="#1D1D1F" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
             </div>
             <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">X01</h3>
@@ -243,7 +243,7 @@ export function HomePage() {
           </div>
 
           {/* LOBBY */}
-          <div className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(15,58,34,0.08)] group overflow-hidden">
+          <div className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(0, 0, 0, 0.08)] group overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
 
             <div className="absolute top-3 right-3 flex items-center gap-[5px] p-[3px_9px_3px_7px] bg-cream border border-forest rounded-full">
@@ -253,10 +253,10 @@ export function HomePage() {
 
             <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
               <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                <path d="M4 19 L13 9" stroke="#1A5833" strokeWidth="1.6" strokeLinecap="round" />
-                <circle cx="14.3" cy="7.7" r="1.7" fill="#BFA464" />
-                <path d="M20 19 L11 9" stroke="#75806F" strokeWidth="1.6" strokeLinecap="round" />
-                <circle cx="9.7" cy="7.7" r="1.7" fill="#0F3A22" />
+                <path d="M4 19 L13 9" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" />
+                <circle cx="14.3" cy="7.7" r="1.7" fill="#86868B" />
+                <path d="M20 19 L11 9" stroke="#86868B" strokeWidth="1.6" strokeLinecap="round" />
+                <circle cx="9.7" cy="7.7" r="1.7" fill="#000000" />
               </svg>
             </div>
             <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">Lobby</h3>
@@ -266,7 +266,7 @@ export function HomePage() {
           {/* AROUND THE CLOCK */}
           <div
             onClick={() => setShowATCSetup(true)}
-            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(15,58,34,0.08)] group overflow-hidden"
+            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(0, 0, 0, 0.08)] group overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
 
@@ -280,12 +280,12 @@ export function HomePage() {
           {/* ROUND THE WORLD */}
           <div
             onClick={() => setShowRTWSetup(true)}
-            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(15,58,34,0.08)] group overflow-hidden"
+            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(0, 0, 0, 0.08)] group overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
 
             <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#1A5833" strokeWidth="1.6" strokeLinecap="round" className="w-5 h-5">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" className="w-5 h-5">
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 3 v18" />
                 <path d="M3 12 h18" />
@@ -298,11 +298,11 @@ export function HomePage() {
           {/* CRICKET */}
           <div className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] opacity-70">
             <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#1A5833" strokeWidth="1.6" strokeLinecap="round" className="w-5 h-5">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" className="w-5 h-5">
                 <line x1="6" y1="5" x2="6" y2="17" />
                 <line x1="10" y1="5" x2="10" y2="17" />
                 <line x1="14" y1="5" x2="14" y2="17" />
-                <line x1="5" y1="17" x2="15" y2="5" stroke="#BFA464" />
+                <line x1="5" y1="17" x2="15" y2="5" stroke="#86868B" />
               </svg>
             </div>
             <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">Cricket</h3>
@@ -437,7 +437,7 @@ export function HomePage() {
                   w-full py-4 rounded-xl bg-gold
                   font-sans font-bold text-lg text-white
                   hover:bg-gold-deep active:scale-[0.98] transition-all duration-200
-                  shadow-[0_4px_14px_rgba(191,164,100,0.4)]
+                  shadow-[0_4px_14px_rgba(0, 0, 0, 0.4)]
                 "
               >
                 START MATCH
@@ -564,7 +564,7 @@ export function HomePage() {
                   w-full py-4 rounded-xl bg-gold
                   font-sans font-bold text-lg text-white
                   hover:bg-gold-deep active:scale-[0.98] transition-all duration-200
-                  shadow-[0_4px_14px_rgba(191,164,100,0.4)]
+                  shadow-[0_4px_14px_rgba(0, 0, 0, 0.4)]
                 "
               >
                 START MATCH
@@ -667,7 +667,7 @@ export function HomePage() {
                   w-full py-4 rounded-xl bg-gold
                   font-sans font-bold text-lg text-white
                   hover:bg-gold-deep active:scale-[0.98] transition-all duration-200
-                  shadow-[0_4px_14px_rgba(191,164,100,0.4)]
+                  shadow-[0_4px_14px_rgba(0, 0, 0, 0.4)]
                 "
               >
                 START MATCH

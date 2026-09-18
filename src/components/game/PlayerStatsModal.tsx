@@ -114,7 +114,7 @@ export function PlayerStatsModal({ game, initialPlayerId, onClose }: PlayerStats
               width="100%"
               height="100%"
               viewBox={`0 0 320 320`}
-              className={`drop-shadow-[0_4px_16px_rgba(15,58,34,0.1)] rounded-full bg-cream transition-opacity duration-300 ${activeTab === 'heatmap' ? 'opacity-70' : 'opacity-100'}`}
+              className={`drop-shadow-[0_4px_16px_rgba(0, 0, 0, 0.1)] rounded-full bg-cream transition-opacity duration-300 ${activeTab === 'heatmap' ? 'opacity-70' : 'opacity-100'}`}
             >
               <DartboardContent size={320} cx={160} cy={160} scale={160} />
 

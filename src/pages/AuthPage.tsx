@@ -57,7 +57,7 @@ export function AuthPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] px-6 items-center justify-center">
+    <div className="flex flex-col min-h-dvh w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] px-6 items-center justify-center">
       
       <div className="w-full max-w-[140px] mb-8">
         <img src={bdcLogo} alt="BDC Logo" className="w-full h-auto block" />
@@ -132,7 +132,7 @@ export function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 w-full py-4 rounded-xl bg-gold font-sans font-bold text-[15px] text-white hover:bg-gold-deep active:scale-[0.98] transition-all duration-200 shadow-[0_4px_14px_rgba(191,164,100,0.4)] disabled:opacity-70"
+            className="mt-2 w-full py-4 rounded-xl bg-gold font-sans font-bold text-[15px] text-white hover:bg-gold-deep active:scale-[0.98] transition-all duration-200 shadow-[0_4px_14px_rgba(0, 0, 0, 0.4)] disabled:opacity-70"
           >
             {loading ? 'Processing...' : (isSignUp ? 'SIGN UP' : 'LOG IN')}
           </button>

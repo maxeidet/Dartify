@@ -161,7 +161,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
 
       {currentTarget !== undefined ? (
         <div className="flex flex-1 flex-col px-3 pb-3">
-          <div className="mb-3 rounded-[18px] border border-line border-t-[3px] border-t-forest bg-panel px-5 py-4 text-center shadow-[0_4px_14px_rgba(15,58,34,0.05)]">
+          <div className="mb-3 rounded-[18px] border border-line border-t-[3px] border-t-forest bg-panel px-5 py-4 text-center shadow-[0_4px_14px_rgba(0, 0, 0, 0.05)]">
             <p className="font-sans text-[10px] font-bold uppercase tracking-[2.4px] text-gold-deep">Current target</p>
             <p className="mt-1 font-display text-5xl font-black leading-none text-forest-deep">{targetLabel}</p>
           </div>
@@ -253,7 +253,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
       )}
 
       {/* ── Footer: Undo + Next Round ─────────── */}
-      <div className="grid grid-cols-4 gap-2 px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] border-t border-line bg-cream z-10 relative shadow-[0_-4px_10px_rgba(15,58,34,0.02)]">
+      <div className="grid grid-cols-4 gap-2 px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] border-t border-line bg-cream z-10 relative shadow-[0_-4px_10px_rgba(0, 0, 0, 0.02)]">
         {/* UNDO — 1/4 width */}
         <button
           onClick={onUndo}
@@ -278,7 +278,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
             col-span-3 flex items-center justify-center
             rounded-[14px] font-sans font-bold text-sm tracking-[2px] uppercase
             bg-gold hover:bg-gold-deep
-            text-white shadow-[0_4px_14px_rgba(191,164,100,0.3)]
+            text-white shadow-[0_4px_14px_rgba(0, 0, 0, 0.3)]
             active:scale-[0.98] transition-all duration-200
             py-3
           "

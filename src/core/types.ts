@@ -209,12 +209,3 @@ export interface LocalPlayer {
   name: string;
   avatarUrl?: string;
 }
-
-// ─────────────────────────────────────────────
-// Voice recognition
-// ─────────────────────────────────────────────
-
-export interface ParsedVoiceCommand {
-  throw_: DartThrow;
-  rawTranscript: string;
-}

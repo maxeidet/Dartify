@@ -15,8 +15,8 @@ export default defineConfig({
         name: 'Dart Scoreboard',
         short_name: 'Darts',
         description: 'Professional dart scoreboard with offline support and real-time multiplayer',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#F0F0F2',
+        background_color: '#F0F0F2',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
