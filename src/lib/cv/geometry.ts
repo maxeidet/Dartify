@@ -36,7 +36,7 @@ export function calculateScore(point: PixelCoords, boardSize: number): DartThrow
   
   // Convert to polar coords
   // By doing atan2(dx, -dy), 0 degrees is at the top (dy is negative), and it increases clockwise.
-  let angleRad = Math.atan2(dx, -dy);
+  const angleRad = Math.atan2(dx, -dy);
   let angleDeg = angleRad * (180 / Math.PI);
   angleDeg = (angleDeg + 360) % 360; // Normalize to [0, 360)
 
@@ -45,8 +45,8 @@ export function calculateScore(point: PixelCoords, boardSize: number): DartThrow
   const normalizedRadius = pixelRadius / (boardSize / 2);
 
   // Determine multiplier and segment overrides (bullseyes)
-  let multiplier: Multiplier = 1;
-  let segment: Segment = 0;
+  let multiplier: Multiplier;
+  let segment: Segment;
 
   if (normalizedRadius > RINGS.DOUBLE_OUTER) {
     // Miss

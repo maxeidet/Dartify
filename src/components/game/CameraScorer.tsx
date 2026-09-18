@@ -25,7 +25,7 @@ export const CameraScorer: React.FC<CameraScorerProps> = ({ onDartDetected }) =>
   useEffect(() => {
     // Wait until OpenCV is loaded globally from index.html script tag
     const checkOpenCV = setInterval(() => {
-      // @ts-ignore
+      // @ts-expect-error global cv from index.html script tag
       if (typeof cv !== 'undefined') {
         clearInterval(checkOpenCV);
         
@@ -150,7 +150,7 @@ export const CameraScorer: React.FC<CameraScorerProps> = ({ onDartDetected }) =>
     tempCtx.drawImage(videoRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
     const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
 
-    // @ts-ignore global cv
+    // @ts-expect-error global cv
     const frame = cv.matFromImageData(imageData);
 
     try {

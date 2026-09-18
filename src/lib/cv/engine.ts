@@ -1,6 +1,6 @@
 import { MotionDetector } from './motion';
 import { extractDartTip } from './detection';
-import { calculateScore, applyHomography, PixelCoords } from './geometry';
+import { calculateScore, applyHomography } from './geometry';
 import { DartThrow } from '../../core/types';
 
 export enum EngineState {
@@ -103,7 +103,7 @@ export class AutoscoringEngine {
     const imageData = this.hiddenCtx.getImageData(0, 0, this.hiddenCanvas.width, this.hiddenCanvas.height);
     
     if (this.referenceCvFrame) this.referenceCvFrame.delete();
-    // @ts-ignore global cv
+    // @ts-expect-error global cv
     this.referenceCvFrame = cv.matFromImageData(imageData);
     this.motionDetector.setReferenceFrame(this.referenceCvFrame);
   }
@@ -111,14 +111,14 @@ export class AutoscoringEngine {
   private captureCurrentFrame(): any {
     this.hiddenCtx.drawImage(this.videoElement!, 0, 0, this.hiddenCanvas.width, this.hiddenCanvas.height);
     const imageData = this.hiddenCtx.getImageData(0, 0, this.hiddenCanvas.width, this.hiddenCanvas.height);
-    // @ts-ignore global cv
+    // @ts-expect-error global cv
     const frame = cv.matFromImageData(imageData);
     return frame;
   }
 
   private loop = () => {
     // Only process if OpenCV is loaded and video is playing
-    // @ts-ignore
+    // @ts-expect-error global cv from index.html script tag
     if (typeof cv !== 'undefined' && this.videoElement && this.videoElement.readyState === this.videoElement.HAVE_ENOUGH_DATA) {
       
       // Dynamically update canvas size if device rotates or stream changes
