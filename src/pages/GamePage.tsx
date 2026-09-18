@@ -210,7 +210,7 @@ export function GamePage() {
 
       {/* ── Score cards ── */}
       {gameState.players.length >= 3 ? (
-        <div className="flex gap-2 px-3 pt-2 overflow-x-auto scrollbar-none snap-x snap-mandatory">
+        <div className="flex gap-2 px-3 pt-1.5 overflow-x-auto scrollbar-none snap-x snap-mandatory">
           {gameState.players.map((player, idx) => (
             <ScoreDisplay
               key={player.participantId}
@@ -226,7 +226,7 @@ export function GamePage() {
           ))}
         </div>
       ) : (
-        <div className={`px-3 pt-2 ${gameState.players.length > 1 ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}`}>
+        <div className={`px-3 pt-1.5 ${gameState.players.length > 1 ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}`}>
           {gameState.players.map((player, idx) => (
             <ScoreDisplay
               key={player.participantId}
@@ -243,7 +243,7 @@ export function GamePage() {
       )}
 
       {/* ── Round total row ── */}
-      <div className="flex items-center justify-center px-3 py-1 z-10 relative">
+      <div className="flex items-center justify-center px-3 py-0.5 z-10 relative">
         <div
           className={`text-[11px] text-muted font-sans font-semibold tracking-wide uppercase ${
             gameState.currentDartsInRound.length > 0 ? '' : 'invisible'

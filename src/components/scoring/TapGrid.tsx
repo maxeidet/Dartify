@@ -253,7 +253,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
       )}
 
       {/* ── Footer: Undo + Next Round ─────────── */}
-      <div className="grid grid-cols-4 gap-2 px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] border-t border-line bg-cream z-10 relative shadow-[0_-4px_10px_rgba(0, 0, 0, 0.02)]">
+      <div className="grid grid-cols-4 gap-2 px-3 pt-2 pb-[max(8px,env(safe-area-inset-bottom))] border-t border-line bg-cream z-10 relative shadow-[0_-4px_10px_rgba(0, 0, 0, 0.02)]">
         {/* UNDO — 1/4 width */}
         <button
           onClick={onUndo}
@@ -261,13 +261,13 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
           className="
             col-span-1 flex flex-col items-center justify-center gap-0.5
             rounded-[14px] border border-line bg-panel
-            py-3 font-sans font-bold text-[9px] tracking-[2px] text-muted uppercase
+            py-2 font-sans font-bold text-[9px] tracking-[2px] text-muted uppercase
             hover:border-gold disabled:opacity-40 disabled:cursor-not-allowed
             active:scale-95 transition-all duration-100
           "
           aria-label="Undo last dart"
         >
-          <Undo2 size={18} strokeWidth={2.5} className="mb-0.5" />
+          <Undo2 size={15} strokeWidth={2.5} className="mb-0.5" />
           <span>Undo</span>
         </button>
 
@@ -280,7 +280,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
             bg-gold hover:bg-gold-deep
             text-white shadow-[0_4px_14px_rgba(0, 0, 0, 0.3)]
             active:scale-[0.98] transition-all duration-200
-            py-3
+            py-2
           "
           aria-label="Next round"
         >

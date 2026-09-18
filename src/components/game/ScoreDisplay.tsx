@@ -147,7 +147,7 @@ export function ScoreDisplay({
   return (
     <div
       className={`
-        rounded-[18px] p-3 transition-all duration-300 relative overflow-hidden
+        rounded-[18px] p-2.5 transition-all duration-300 relative overflow-hidden
         ${isCurrentPlayer
           ? `bg-panel border-[1.5px] shadow-[0_4px_16px_rgba(0, 0, 0, 0.06)] ${isBust ? 'border-[#A63B37] score-card-bust' : 'border-forest'}`
           : 'bg-cream border border-line opacity-75 shadow-sm'
@@ -155,7 +155,7 @@ export function ScoreDisplay({
       `}
     >
       {/* Player name + turn indicator */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-2">
           {/* Avatar */}
           <div
@@ -200,12 +200,12 @@ export function ScoreDisplay({
       {/* Main score */}
       <div
         className={`
-          relative font-display font-black text-center leading-none mb-2
+          relative font-display font-black text-center leading-none mb-1
           ${animate ? 'score-count-enter' : ''}
           ${isBust ? 'score-crack' : ''}
           ${isCurrentPlayer ? 'text-forest-deep' : 'text-muted'}
         `}
-        style={{ fontSize: 'clamp(2.2rem, 8vw, 3rem)' }}
+        style={{ fontSize: 'clamp(1.9rem, 7vw, 2.6rem)' }}
       >
         {mainScore}
         {isBust && (
