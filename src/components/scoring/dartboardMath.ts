@@ -70,24 +70,16 @@ export function getHitTarget(x: number, y: number, cx: number, cy: number, scale
   return { segment, multiplier };
 }
 
-export function getMarkerPosition(dart: DartThrow, index: number, cx: number, cy: number, scale: number, size: number) {
+export function getMarkerPosition(dart: DartThrow, cx: number, cy: number, scale: number, size: number) {
   if (dart.segment === 0) return null;
 
+  // Taps store their exact spot on the board — draw the marker right there.
   const point = dart.boardPoint;
   if (point) {
-    const stableOffsets = [
-      { x: 0, y: 0 },
-      { x: 5, y: -5 },
-      { x: -5, y: 5 },
-    ] as const;
-    // Allow for more than 3 darts when rendering stats, simply cycle the offsets
-    const offset = stableOffsets[index % stableOffsets.length];
-
-    return {
-      x: point.x * size + offset.x,
-      y: point.y * size + offset.y,
-    };
+    return { x: point.x * size, y: point.y * size };
   }
+
+  // Quick-tap throws have no position; place them in the middle of their bed.
 
   const boardIndex = dart.segment === 25 ? 0 : BOARD_ORDER.indexOf(dart.segment as (typeof BOARD_ORDER)[number]);
   const angle = boardIndex >= 0 ? boardIndex * ANGLE_PER_SEGMENT : 0;

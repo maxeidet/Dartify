@@ -131,7 +131,7 @@ export function PlayerStatsModal({ game, initialPlayerId, onClose }: PlayerStats
                 {activeTab === 'landings' && (
                   <g className="pointer-events-none">
                     {allThrows.map((dart, index) => {
-                      const pos = getMarkerPosition(dart, index, 160, 160, 160, 320);
+                      const pos = getMarkerPosition(dart, 160, 160, 160, 320);
                       if (!pos) return null;
 
                       const markerFill =

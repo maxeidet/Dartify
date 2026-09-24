@@ -53,7 +53,11 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
   const cy = size / 2;
   const scale = size / 2;
 
-  // Handle interacting with the board
+  // Handle interacting with the board. The dart is committed at the last
+  // position shown in the magnifier, not where the finger happens to lift —
+  // fingers drift a few pixels on release, which made markers land off-target.
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+
   const handlePointerEvent = (e: React.PointerEvent<HTMLDivElement>, isEnd = false) => {
     if (disabled || !containerRef.current) return;
 
@@ -64,12 +68,13 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
 
     const { clientX, clientY } = e;
 
-    // Coordinates relative to the SVG
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    // Coordinates relative to the board, in the same units as `size`
+    const x = ((clientX - rect.left) / rect.width) * size;
+    const y = ((clientY - rect.top) / rect.height) * size;
 
     if (!isEnd) {
       isDraggingRef.current = true;
+      lastPointRef.current = { x, y };
       setTouchPos({ x, y });
       setClientPos({ x: clientX, y: clientY });
       setHoveredDart(getHitTarget(x, y, cx, cy, scale));
@@ -77,15 +82,14 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
     } else {
       if (!isDraggingRef.current) return;
       isDraggingRef.current = false;
-      const finalTarget = getHitTarget(x, y, cx, cy, scale);
+      const point = lastPointRef.current ?? { x, y };
+      lastPointRef.current = null;
+      const finalTarget = getHitTarget(point.x, point.y, cx, cy, scale);
       setIsDragging(false);
       setHoveredDart(null);
       onDartThrown({
         ...finalTarget,
-        boardPoint: {
-          x: rect.width > 0 ? x / rect.width : 0.5,
-          y: rect.height > 0 ? y / rect.height : 0.5,
-        },
+        boardPoint: { x: point.x / size, y: point.y / size },
       });
     }
   };
@@ -112,7 +116,12 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
           handlePointerEvent(e, true);
           e.currentTarget.releasePointerCapture(e.pointerId);
         }}
-        onPointerCancel={(e) => handlePointerEvent(e, true)}
+        onPointerCancel={() => {
+          isDraggingRef.current = false;
+          lastPointRef.current = null;
+          setIsDragging(false);
+          setHoveredDart(null);
+        }}
         onContextMenu={(e) => e.preventDefault()}
       >
         <svg
@@ -132,50 +141,32 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
           )}
           <g className="pointer-events-none">
             {visibleDarts.map((dart, index) => {
-              const pos = getMarkerPosition(dart, index, cx, cy, scale, size);
+              const pos = getMarkerPosition(dart, cx, cy, scale, size);
               if (!pos) return null;
 
-              const markerFill =
-                dart.segment === 25
-                  ? dart.multiplier === 2
-                    ? '#9E2A2B'
-                    : '#1A5833'
-                  : dart.multiplier === 3
-                    ? '#F5E2A0'
-                    : dart.multiplier === 2
-                      ? '#E5DFCD'
-                      : '#BFA464';
-
-              const markerStroke = dart.multiplier === 3 ? '#1A5833' : '#2E332E';
-              const markerRadius = dart.segment === 25 ? (dart.multiplier === 2 ? size * 0.017 : size * 0.014) : size * 0.012;
+              // A thin ring with a pinpoint centre marks the exact landing spot;
+              // the dart number sits in a small tag beside it so it never covers the point.
+              const ring = Math.max(5, size * 0.016);
+              const stroke = Math.max(1.25, size * 0.004);
+              const tagR = Math.max(6, size * 0.019);
+              const tagX = pos.x + ring + tagR * 0.55;
+              const tagY = pos.y - ring - tagR * 0.55;
 
               return (
                 <g key={`${dart.segment}-${dart.multiplier}-${index}`}>
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={markerRadius}
-                    fill={markerFill}
-                    stroke={markerStroke}
-                    strokeWidth={Math.max(1, size * 0.0035)}
-                    opacity="0.95"
-                  />
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={markerRadius * 0.35}
-                    fill="#F8F5EC"
-                    opacity="0.95"
-                  />
+                  <circle cx={pos.x} cy={pos.y} r={ring} fill="none" stroke="#FFFFFF" strokeWidth={stroke * 2.6} opacity="0.9" />
+                  <circle cx={pos.x} cy={pos.y} r={ring} fill="none" stroke="#1C1D20" strokeWidth={stroke} />
+                  <circle cx={pos.x} cy={pos.y} r={Math.max(1.6, size * 0.0045)} fill="#1C1D20" stroke="#FFFFFF" strokeWidth={stroke * 0.8} />
+                  <circle cx={tagX} cy={tagY} r={tagR} fill="#1C1D20" stroke="#FFFFFF" strokeWidth={stroke} />
                   <text
-                    x={pos.x}
-                    y={pos.y + markerRadius * 0.15}
+                    x={tagX}
+                    y={tagY}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize={size * 0.022}
-                    fontFamily="Fraunces, serif"
-                    fontWeight="900"
-                    fill={markerStroke}
+                    fontSize={tagR * 1.15}
+                    fontFamily="Inter, system-ui, sans-serif"
+                    fontWeight="700"
+                    fill="#FFFFFF"
                   >
                     {index + 1}
                   </text>
