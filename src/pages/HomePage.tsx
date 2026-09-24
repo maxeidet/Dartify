@@ -1,39 +1,33 @@
 import { useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChartColumn, ChartPie, ChevronRight, Clock3, Flame, Globe, Plus, Target, Trophy, Users } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import { useHistoryStore, computeX01Avg, computeHighOut, computeBestLeg } from '../store/historyStore';
 import { useAuthStore } from '../store/authStore';
-import type { Participant, X01Config, AroundTheClockConfig } from '../core/types';
-import { X } from 'lucide-react';
 import bdcLogo from '../assets/bdc-logo-transparent.png';
-import { PlayerSelector, SelectedPlayer } from '../components/shared/PlayerSelector';
+import type { SelectedPlayer } from '../components/shared/PlayerSelector';
+import { MatchSetupSheet } from '../components/shared/MatchSetupSheet';
+import type { SetupMode } from '../components/shared/MatchSetupSheet';
+import { Avatar, Badge, ShellTitle, StatTile } from '../components/shared/SoftUI';
+import { CricketIcon, DartIcon, ModeIcon } from '../components/shared/ModeIcon';
+import { ACCENTS, SLOT_ACCENTS } from '../components/shared/softTokens';
+import type { Accent } from '../components/shared/softTokens';
 
-function RingsEmblem({ size = 52 }: { size?: number }) {
-  const layers = [
-    { d: 1.00, c: '#86868B' },   // gold
-    { d: 0.88, c: '#F0F0F2' },   // cream
-    { d: 0.72, c: '#1D1D1F' },   // ink
-    { d: 0.56, c: '#1D1D1F' },   // forest
-    { d: 0.42, c: '#F0F0F2' },   // cream
-    { d: 0.28, c: '#1D1D1F' },   // ink
-    { d: 0.15, c: '#A63B37' },   // red
-  ];
-  return (
-    <div className="relative rounded-full shrink-0" style={{ width: size, height: size }}>
-      {layers.map((l, i) => (
-        <span
-          key={i}
-          className="absolute rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{ width: size * l.d, height: size * l.d, background: l.c }}
-        />
-      ))}
-    </div>
-  );
+function greeting(date: Date) {
+  const h = date.getHours();
+  if (h < 5) return 'Late session';
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
 }
+
+/** Staggered entrance for the stacked cards */
+const rise = (i: number): CSSProperties => ({ animationDelay: `${i * 60}ms` });
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { gameState, startLocalGame } = useGameStore();
+  const { gameState } = useGameStore();
   const { gameHistory } = useHistoryStore();
   const { profile } = useAuthStore();
 
@@ -41,112 +35,45 @@ export function HomePage() {
   const x01Avg = computeX01Avg(gameHistory);
   const highOut = computeHighOut(gameHistory);
   const bestLeg = computeBestLeg(gameHistory);
+  const gamesPlayed = gameHistory.length;
 
-  const [showX01Setup, setShowX01Setup] = useState(false);
+  const [setupMode, setSetupMode] = useState<SetupMode | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>([]);
   const [numPlayers, setNumPlayers] = useState(2);
-  const [startingScore, setStartingScore] = useState<301 | 501 | 701>(501);
-  const [doubleOut, setDoubleOut] = useState(true);
-  const [doubleIn, setDoubleIn] = useState(false);
 
-  const [showATCSetup, setShowATCSetup] = useState(false);
-  const [atcHitType, setAtcHitType] = useState<'singles' | 'any' | 'double' | 'trebles'>('any');
-  const [atcIncludesBull, setAtcIncludesBull] = useState(true);
+  const statsHeadline =
+    x01Avg > 0
+      ? `Averaging ${x01Avg} a visit.`
+      : gamesPlayed > 0
+        ? `${gamesPlayed} ${gamesPlayed === 1 ? 'game' : 'games'} in the books.`
+        : 'No games yet. The board is waiting.';
 
-  const [showRTWSetup, setShowRTWSetup] = useState(false);
-  const [rtwIncludesBull, setRtwIncludesBull] = useState(true);
-
-  const handleStart = () => {
-    if (selectedPlayers.length !== numPlayers) {
-      alert(`Please select ${numPlayers} players`);
-      return;
-    }
-
-    const participants: Participant[] = selectedPlayers.map((p, i) => ({
-      id: p.id,
-      type: 'local', // In a local game, all players are considered local to this device
-      displayName: p.name,
-      displayOrder: i,
-    }));
-
-    const config: X01Config = {
-      mode: 'x01',
-      startingScore,
-      doubleOut,
-      doubleIn,
-      legs: 1,
-    };
-
-    startLocalGame(participants, config);
-    navigate('/game');
-  };
-
-  const handleStartATC = () => {
-    if (selectedPlayers.length !== numPlayers) {
-      alert(`Please select ${numPlayers} players`);
-      return;
-    }
-
-    const participants: Participant[] = selectedPlayers.map((p, i) => ({
-      id: p.id,
-      type: 'local',
-      displayName: p.name,
-      displayOrder: i,
-    }));
-
-    const config: AroundTheClockConfig = {
-      mode: 'around_the_clock',
-      hitType: atcHitType,
-      includesBull: atcIncludesBull,
-    };
-
-    startLocalGame(participants, config);
-    navigate('/game');
-  };
-
-  const handleStartRTW = () => {
-    if (selectedPlayers.length !== numPlayers) {
-      alert(`Please select ${numPlayers} players`);
-      return;
-    }
-
-    const participants: Participant[] = selectedPlayers.map((p, i) => ({
-      id: p.id,
-      type: 'local',
-      displayName: p.name,
-      displayOrder: i,
-    }));
-
-    const config = {
-      mode: 'round_the_world',
-      includesBull: rtwIncludesBull,
-    };
-
-    startLocalGame(participants, config as any);
-    navigate('/game');
-  };
+  const ongoing = gameState?.status === 'ongoing' ? gameState : null;
 
   return (
-    <div className="flex flex-col h-dvh overflow-y-auto w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)]">
+    <div className="flex flex-col h-dvh overflow-y-auto w-full bg-canvas font-sans text-slate pt-[max(env(safe-area-inset-top),12px)] pb-[max(env(safe-area-inset-bottom),16px)]">
 
-      <div className="relative pt-[26px] px-[22px] pb-12 z-10 flex flex-col flex-1 max-w-md mx-auto w-full">
+      <div className="flex flex-col gap-4 px-4 pt-3 pb-8 max-w-md mx-auto w-full">
 
-        <header className="flex items-start justify-between gap-2.5">
-          <div className="w-full max-w-[120px]">
-            <img src={bdcLogo} alt="BDC Logo" className="w-full h-auto block" />
+        {/* Header */}
+        <header className="flex items-center justify-between px-2 soft-rise" style={rise(0)}>
+          <div className="flex flex-col">
+            <img src={bdcLogo} alt="BDC" className="h-9 w-auto self-start" />
+            <span className="mt-2 text-[15px] font-medium text-subtle">
+              {greeting(new Date())}{profile?.username ? `, ${profile.username}` : ''}
+            </span>
           </div>
 
           <button
             id="home-avatar-btn"
             onClick={() => navigate('/profile')}
-            className="w-[42px] h-[42px] rounded-full border-[1.5px] border-forest flex items-center justify-center bg-panel shrink-0 hover:border-gold transition-colors"
+            aria-label="Profile"
+            className="w-12 h-12 rounded-full soft-float soft-press flex items-center justify-center shrink-0"
           >
             {profile?.username ? (
-              <span className="font-display font-black text-[16px] text-forest-deep">
-                {profile.username.charAt(0).toUpperCase()}
-              </span>
+              <Avatar name={profile.username} size={40} accent="azure" />
             ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-forest)" strokeWidth="1.6">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-slate-soft)" strokeWidth="1.8">
                 <circle cx="12" cy="8" r="3.4" />
                 <path d="M5 20c0-3.6 3.1-6.4 7-6.4s7 2.8 7 6.4" />
               </svg>
@@ -154,530 +81,191 @@ export function HomePage() {
           </button>
         </header>
 
-        <hr className="mt-5 border-gradient-rule" />
+        {/* Resume — ticket-style card for the game in progress */}
+        {ongoing && (
+          <section className="soft-shell p-2 soft-rise" style={rise(1)}>
+            <div className="soft-card p-5">
+              <div className="flex items-center justify-between">
+                <Badge accent="mint">
+                  <span className="relative flex w-2 h-2">
+                    <span className="absolute inset-0 rounded-full bg-mint animate-ping opacity-60" />
+                    <span className="relative w-2 h-2 rounded-full bg-mint-ink" />
+                  </span>
+                  In progress
+                </Badge>
+                <span className="text-[15px] font-medium text-subtle tabular-nums">Round {ongoing.currentRound}</span>
+              </div>
 
-        {/* Season Stats Eyebrow */}
-        <div className="flex items-center gap-2 mt-[26px] mb-3">
-          <div className="w-[14px] h-[2px] bg-gold-deep"></div>
-          <span className="font-sans text-[11px] font-bold tracking-[2.6px] text-forest-deep uppercase">
-            Season Stats
-          </span>
-        </div>
+              <p className="mt-4 text-[22px] font-semibold tracking-display text-slate">Pick up where you left off.</p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {ongoing.players.slice(0, 4).map((p, i) => (
+                    <Avatar key={p.participantId} name={p.displayName} size={30} accent={SLOT_ACCENTS[i % 4]} />
+                  ))}
+                </div>
+                <span className="text-[15px] font-medium text-slate-soft">
+                  {ongoing.players.length} {ongoing.players.length === 1 ? 'player' : 'players'}
+                </span>
+              </div>
 
-        {/* Stats Panel */}
-        <div
-          onClick={() => navigate('/stats')}
-          className="relative bg-panel border border-line rounded-[18px] p-[20px_18px_18px] flex cursor-pointer hover:border-gold transition-colors"
-        >
-
-          <div className="flex-1 px-1.5">
-            <div className="font-sans font-extrabold text-[26px] text-forest flex items-baseline gap-0.5 tabular-nums">
-              {x01Avg > 0 ? x01Avg : '—'}
+              <button
+                onClick={() => navigate('/game')}
+                className="mt-5 w-full h-[52px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold"
+              >
+                Resume game
+                <ChevronRight size={18} strokeWidth={2.5} />
+              </button>
             </div>
-            <div className="mt-1.5 text-[9.5px] font-bold tracking-[1.6px] text-muted uppercase">Avg (X01)</div>
-          </div>
-
-          <div className="flex-1 px-1.5 border-l border-line">
-            <div className="font-sans font-extrabold text-[26px] text-gold-deep flex items-baseline gap-0.5 tabular-nums">
-              {highOut > 0 ? highOut : '—'}
-            </div>
-            <div className="mt-1.5 text-[9.5px] font-bold tracking-[1.6px] text-muted uppercase">High Out</div>
-          </div>
-
-          <div className="flex-1 px-1.5 border-l border-line">
-            <div className="font-sans font-extrabold text-[26px] text-forest flex items-baseline gap-0.5 tabular-nums">
-              {bestLeg !== null ? bestLeg : '—'}
-            </div>
-            <div className="mt-1.5 text-[9.5px] font-bold tracking-[1.6px] text-muted uppercase">Best Leg</div>
-          </div>
-
-        </div>
-
-        {/* Resume banner */}
-        {gameState?.status === 'ongoing' && (
-          <button
-            onClick={() => navigate('/game')}
-            className="mt-4 w-full flex items-center justify-between p-4 rounded-[18px] bg-forest/5 border border-forest hover:bg-forest/10 transition-colors"
-          >
-            <div className="text-left">
-              <p className="font-sans text-[10px] font-bold tracking-[2px] text-forest uppercase mb-1">Active Game</p>
-              <p className="text-forest-deep font-display font-semibold text-lg tracking-wide">
-                Round {gameState.currentRound} <span className="text-muted mx-1 font-sans font-normal">—</span> {gameState.players.length} players
-              </p>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-forest flex items-center justify-center text-white">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M5 3l14 9-14 9V3z" />
-              </svg>
-            </div>
-          </button>
+          </section>
         )}
 
-        {/* Play Eyebrow */}
-        <div className="flex items-center gap-2 mt-[26px] mb-3">
-          <div className="w-[14px] h-[2px] bg-gold-deep"></div>
-          <span className="font-sans text-[11px] font-bold tracking-[2.6px] text-forest-deep uppercase">
-            Play
-          </span>
-        </div>
+        {/* Stats */}
+        <section className="soft-shell p-2 soft-rise" style={rise(2)}>
+          <div className="px-4 pt-4 pb-5">
+            <ShellTitle
+              icon={ChartPie}
+              trailing={
+                <button
+                  onClick={() => navigate('/stats')}
+                  className="flex items-center gap-0.5 text-[15px] font-medium text-subtle hover:text-slate-soft transition-colors"
+                >
+                  All stats <ChevronRight size={16} strokeWidth={2.4} />
+                </button>
+              }
+            >
+              Season
+            </ShellTitle>
+            <p className="mt-5 text-[26px] leading-[1.18] font-semibold tracking-display text-slate">{statsHeadline}</p>
+            {gamesPlayed > 0 && x01Avg > 0 && (
+              <p className="mt-1.5 text-[15px] font-medium text-subtle">
+                {gamesPlayed} {gamesPlayed === 1 ? 'game' : 'games'} played
+              </p>
+            )}
+          </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-2 gap-3">
-
-          {/* X01 */}
-          <div
-            onClick={() => setShowX01Setup(true)}
-            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(0, 0, 0, 0.08)] group overflow-hidden"
+          <button
+            onClick={() => navigate('/stats')}
+            className="soft-card soft-press w-full grid grid-cols-3 p-2 text-left"
           >
-            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
+            <StatTile icon={Target} accent="mint" value={x01Avg} label="3-dart avg" />
+            <StatTile icon={Trophy} accent="azure" value={highOut} label="High out" divider />
+            <StatTile icon={Flame} accent="coral" value={bestLeg} label="Best leg" divider />
+          </button>
+        </section>
 
-            <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                <path d="M4 20 L15 9" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" />
-                <circle cx="16.5" cy="7.5" r="2" fill="#86868B" />
-                <path d="M18 6 L21 3 M19 8 L22 7 M17 4 L19 1" stroke="#1D1D1F" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-            </div>
-            <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">X01</h3>
-            <p className="mt-1 text-xs text-muted">301 / 501 / 701</p>
+        {/* Play */}
+        <section className="soft-shell p-2 soft-rise" style={rise(3)}>
+          <div className="px-4 pt-4 pb-4">
+            <ShellTitle icon={Target}>Play</ShellTitle>
           </div>
 
-          {/* LOBBY */}
-          <div className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(0, 0, 0, 0.08)] group overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
-
-            <div className="absolute top-3 right-3 flex items-center gap-[5px] p-[3px_9px_3px_7px] bg-cream border border-forest rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-forest"></span>
-              <span className="font-sans text-[9px] font-bold tracking-[1.2px] text-forest-deep uppercase">ONLINE</span>
-            </div>
-
-            <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                <path d="M4 19 L13 9" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" />
-                <circle cx="14.3" cy="7.7" r="1.7" fill="#86868B" />
-                <path d="M20 19 L11 9" stroke="#86868B" strokeWidth="1.6" strokeLinecap="round" />
-                <circle cx="9.7" cy="7.7" r="1.7" fill="#000000" />
-              </svg>
-            </div>
-            <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">Lobby</h3>
-            <p className="mt-1 text-xs text-muted">Play with friends</p>
+          <div className="flex flex-col gap-2">
+            <ModeRow
+              icon={<DartIcon />}
+              accent="mint"
+              title="X01"
+              subtitle="301 · 501 · 701"
+              badge={<Badge accent="mint">Classic</Badge>}
+              onClick={() => setSetupMode('x01')}
+            />
+            <ModeRow
+              icon={<Clock3 size={22} strokeWidth={2.2} />}
+              accent="azure"
+              title="Around the Clock"
+              subtitle="Hit 1 to 20 in order"
+              badge={<Badge accent="azure">Practice</Badge>}
+              onClick={() => setSetupMode('around_the_clock')}
+            />
+            <ModeRow
+              icon={<Globe size={22} strokeWidth={2.2} />}
+              accent="orchid"
+              title="Round the World"
+              subtitle="Points on every number"
+              badge={<Badge accent="orchid">Practice</Badge>}
+              onClick={() => setSetupMode('round_the_world')}
+            />
+            <ModeRow
+              icon={<Users size={22} strokeWidth={2.2} />}
+              accent="coral"
+              title="Lobby"
+              subtitle="Play with friends online"
+              badge={<Badge accent="coral">Soon</Badge>}
+            />
+            <ModeRow
+              icon={<CricketIcon />}
+              accent="coral"
+              title="Cricket"
+              subtitle="Close out 15 to 20 and bull"
+              badge={<Badge accent="coral">Soon</Badge>}
+            />
           </div>
 
-          {/* AROUND THE CLOCK */}
-          <div
-            onClick={() => setShowATCSetup(true)}
-            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(0, 0, 0, 0.08)] group overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
-
-            <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
-              <RingsEmblem size={22} />
-            </div>
-            <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">Around Clock</h3>
-            <p className="mt-1 text-xs text-muted">Hit 1 to 20</p>
+          <div className="flex items-center gap-3 pt-3 px-1 pb-1">
+            <button
+              onClick={() => setSetupMode('x01')}
+              className="flex-1 h-[58px] rounded-full soft-primary soft-press flex items-center justify-center gap-2.5 text-[17px] font-semibold"
+            >
+              <Plus size={20} strokeWidth={2.6} />
+              New match
+            </button>
+            <button
+              onClick={() => navigate('/stats')}
+              aria-label="Stats"
+              className="w-[58px] h-[58px] rounded-full soft-float soft-press flex items-center justify-center text-charcoal shrink-0"
+            >
+              <ChartColumn size={21} strokeWidth={2.4} />
+            </button>
           </div>
+        </section>
 
-          {/* ROUND THE WORLD */}
-          <div
-            onClick={() => setShowRTWSetup(true)}
-            className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] cursor-pointer transition-all hover:-translate-y-[2px] hover:border-gold hover:shadow-[0_6px_16px_rgba(0, 0, 0, 0.08)] group overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px] bg-gold scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100"></div>
-
-            <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" className="w-5 h-5">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 3 v18" />
-                <path d="M3 12 h18" />
-              </svg>
-            </div>
-            <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">Round World</h3>
-            <p className="mt-1 text-xs text-muted">Score points on targets</p>
-          </div>
-
-          {/* CRICKET */}
-          <div className="relative bg-panel border border-line rounded-[20px] p-[18px_16px_16px] opacity-70">
-            <div className="w-[38px] h-[38px] border border-line rounded-[10px] flex items-center justify-center mb-4 bg-cream">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" className="w-5 h-5">
-                <line x1="6" y1="5" x2="6" y2="17" />
-                <line x1="10" y1="5" x2="10" y2="17" />
-                <line x1="14" y1="5" x2="14" y2="17" />
-                <line x1="5" y1="17" x2="15" y2="5" stroke="#86868B" />
-              </svg>
-            </div>
-            <h3 className="font-display font-black text-[19px] tracking-[0.1px] text-forest-deep">Cricket</h3>
-            <p className="mt-1 text-xs text-muted">Close numbers</p>
-          </div>
-
-        </div>
-
-        <footer className="mt-8 pt-4 border-t border-line text-center">
-          <span className="font-sans text-[10px] font-semibold tracking-[2px] text-muted uppercase">SCOREBOARD — V1.0</span>
+        <footer className="pt-2 text-center">
+          <span className="text-[12px] font-medium text-subtle">Scoreboard · v1.0</span>
         </footer>
-
       </div>
 
-      {/* X01 Setup Modal */}
-      {showX01Setup && (
-        <div className="fixed inset-0 z-50 bg-forest-deep/60 backdrop-blur-md flex flex-col justify-end animate-in fade-in duration-200">
-
-          <div className="bg-cream rounded-t-[28px] w-full max-w-md mx-auto overflow-hidden shadow-2xl flex flex-col h-[90vh] animate-in slide-in-from-bottom-8 duration-300">
-
-            <div className="flex justify-between items-center p-6 pb-2 border-b border-line bg-panel">
-              <h2 className="font-display font-black text-[22px] text-forest-deep">Setup X01</h2>
-              <button
-                onClick={() => setShowX01Setup(false)}
-                className="w-8 h-8 rounded-full bg-cream flex items-center justify-center text-muted hover:text-forest transition-colors"
-              >
-                <X size={18} strokeWidth={2} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-
-              {/* Starting Score */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Starting Score
-                </label>
-                <div className="flex gap-2">
-                  {([301, 501, 701] as const).map((score) => (
-                    <button
-                      key={score}
-                      onClick={() => setStartingScore(score)}
-                      className={`
-                        flex-1 py-3 rounded-xl border font-sans font-extrabold text-lg transition-all
-                        ${startingScore === score
-                          ? 'bg-forest border-forest text-white shadow-md'
-                          : 'bg-panel border-line text-muted hover:border-gold'
-                        }
-                      `}
-                    >
-                      {score}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Number of players */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Players
-                </label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setNumPlayers(n)}
-                      className={`
-                        flex-1 py-3 rounded-xl border font-sans font-extrabold text-lg transition-all
-                        ${numPlayers === n
-                          ? 'bg-forest border-forest text-white shadow-md'
-                          : 'bg-panel border-line text-muted hover:border-gold'
-                        }
-                      `}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Player Names */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Select Players ({selectedPlayers.length} / {numPlayers})
-                </label>
-                <PlayerSelector
-                  numPlayers={numPlayers}
-                  selectedPlayers={selectedPlayers}
-                  onChange={setSelectedPlayers}
-                />
-              </div>
-
-              {/* Rules */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Rules
-                </label>
-                <div className="flex flex-col gap-2">
-                  {[
-                    { label: 'Double Out', desc: 'Must finish on a double', val: doubleOut, set: setDoubleOut },
-                    { label: 'Double In', desc: 'Must start with a double', val: doubleIn, set: setDoubleIn },
-                  ].map(({ label, desc, val, set }) => (
-                    <div
-                      key={label}
-                      onClick={() => set(!val)}
-                      className="flex items-center justify-between p-4 rounded-xl bg-panel border border-line cursor-pointer hover:border-gold transition-colors"
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-forest-deep">{label}</span>
-                        <span className="text-[11px] font-medium text-muted mt-0.5">{desc}</span>
-                      </div>
-                      <div className={`
-                        w-11 h-6 rounded-full relative transition-colors duration-300
-                        ${val ? 'bg-forest' : 'bg-line'}
-                      `}>
-                        <div className={`
-                          absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm
-                          ${val ? 'left-6' : 'left-1'}
-                        `} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-
-            <div className="p-6 bg-panel border-t border-line">
-              <button
-                onClick={handleStart}
-                className="
-                  w-full py-4 rounded-xl bg-gold
-                  font-sans font-bold text-lg text-white
-                  hover:bg-gold-deep active:scale-[0.98] transition-all duration-200
-                  shadow-[0_4px_14px_rgba(0, 0, 0, 0.4)]
-                "
-              >
-                START MATCH
-              </button>
-            </div>
-
-          </div>
-        </div>
+      {setupMode && (
+        <MatchSetupSheet
+          key={setupMode}
+          mode={setupMode}
+          icon={<ModeIcon mode={setupMode} size={20} />}
+          numPlayers={numPlayers}
+          onNumPlayersChange={setNumPlayers}
+          selectedPlayers={selectedPlayers}
+          onSelectedPlayersChange={setSelectedPlayers}
+          onClose={() => setSetupMode(null)}
+        />
       )}
-
-      {/* ATC Setup Modal */}
-      {showATCSetup && (
-        <div className="fixed inset-0 z-50 bg-forest-deep/60 backdrop-blur-md flex flex-col justify-end animate-in fade-in duration-200">
-
-          <div className="bg-cream rounded-t-[28px] w-full max-w-md mx-auto overflow-hidden shadow-2xl flex flex-col h-[90vh] animate-in slide-in-from-bottom-8 duration-300">
-
-            <div className="flex justify-between items-center p-6 pb-2 border-b border-line bg-panel">
-              <h2 className="font-display font-black text-[22px] text-forest-deep">Setup Around Clock</h2>
-              <button
-                onClick={() => setShowATCSetup(false)}
-                className="w-8 h-8 rounded-full bg-cream flex items-center justify-center text-muted hover:text-forest transition-colors"
-              >
-                <X size={18} strokeWidth={2} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-
-              {/* Number of players */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Players
-                </label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setNumPlayers(n)}
-                      className={`
-                        flex-1 py-3 rounded-xl border font-sans font-extrabold text-lg transition-all
-                        ${numPlayers === n
-                          ? 'bg-forest border-forest text-white shadow-md'
-                          : 'bg-panel border-line text-muted hover:border-gold'
-                        }
-                      `}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Player Names */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Select Players ({selectedPlayers.length} / {numPlayers})
-                </label>
-                <PlayerSelector
-                  numPlayers={numPlayers}
-                  selectedPlayers={selectedPlayers}
-                  onChange={setSelectedPlayers}
-                />
-              </div>
-
-              {/* Game Settings */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Game Mode Settings
-                </label>
-
-                {/* Hit Type */}
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  {([
-                    { value: 'any', label: 'Any Hit' },
-                    { value: 'singles', label: 'Singles Only' },
-                    { value: 'double', label: 'Doubles Only' },
-                    { value: 'trebles', label: 'Trebles Only' },
-                  ] as const).map((mode) => (
-                    <button
-                      key={mode.value}
-                      onClick={() => setAtcHitType(mode.value)}
-                      className={`
-                        py-3 rounded-xl border font-sans font-extrabold text-[15px] transition-all
-                        ${atcHitType === mode.value
-                          ? 'bg-forest border-forest text-white shadow-md'
-                          : 'bg-panel border-line text-muted hover:border-gold'
-                        }
-                      `}
-                    >
-                      {mode.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <div
-                    onClick={() => setAtcIncludesBull(!atcIncludesBull)}
-                    className="flex items-center justify-between p-4 rounded-xl bg-panel border border-line cursor-pointer hover:border-gold transition-colors"
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-forest-deep">Include Bullseye</span>
-                      <span className="text-[11px] font-medium text-muted mt-0.5">End the game on 25</span>
-                    </div>
-                    <div className={`
-                      w-11 h-6 rounded-full relative transition-colors duration-300
-                      ${atcIncludesBull ? 'bg-forest' : 'bg-line'}
-                    `}>
-                      <div className={`
-                        absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm
-                        ${atcIncludesBull ? 'left-6' : 'left-1'}
-                      `} />
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="p-6 bg-panel border-t border-line">
-              <button
-                onClick={handleStartATC}
-                className="
-                  w-full py-4 rounded-xl bg-gold
-                  font-sans font-bold text-lg text-white
-                  hover:bg-gold-deep active:scale-[0.98] transition-all duration-200
-                  shadow-[0_4px_14px_rgba(0, 0, 0, 0.4)]
-                "
-              >
-                START MATCH
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* RTW Setup Modal */}
-      {showRTWSetup && (
-        <div className="fixed inset-0 z-50 bg-forest-deep/60 backdrop-blur-md flex flex-col justify-end animate-in fade-in duration-200">
-
-          <div className="bg-cream rounded-t-[28px] w-full max-w-md mx-auto overflow-hidden shadow-2xl flex flex-col h-[90vh] animate-in slide-in-from-bottom-8 duration-300">
-
-            <div className="flex justify-between items-center p-6 pb-2 border-b border-line bg-panel">
-              <h2 className="font-display font-black text-[22px] text-forest-deep">Setup Round The World</h2>
-              <button
-                onClick={() => setShowRTWSetup(false)}
-                className="w-8 h-8 rounded-full bg-cream flex items-center justify-center text-muted hover:text-forest transition-colors"
-              >
-                <X size={18} strokeWidth={2} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-
-              {/* Number of players */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Players
-                </label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setNumPlayers(n)}
-                      className={`
-                        flex-1 py-3 rounded-xl border font-sans font-extrabold text-lg transition-all
-                        ${numPlayers === n
-                          ? 'bg-forest border-forest text-white shadow-md'
-                          : 'bg-panel border-line text-muted hover:border-gold'
-                        }
-                      `}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Player Names */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Select Players ({selectedPlayers.length} / {numPlayers})
-                </label>
-                <PlayerSelector
-                  numPlayers={numPlayers}
-                  selectedPlayers={selectedPlayers}
-                  onChange={setSelectedPlayers}
-                />
-              </div>
-
-              {/* Game Settings */}
-              <div className="flex flex-col gap-2">
-                <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                  Game Mode Settings
-                </label>
-
-                <div className="flex flex-col gap-2">
-                  <div
-                    onClick={() => setRtwIncludesBull(!rtwIncludesBull)}
-                    className="flex items-center justify-between p-4 rounded-xl bg-panel border border-line cursor-pointer hover:border-gold transition-colors"
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-forest-deep">Include Bullseye</span>
-                      <span className="text-[11px] font-medium text-muted mt-0.5">End the game on 25</span>
-                    </div>
-                    <div className={`
-                      w-11 h-6 rounded-full relative transition-colors duration-300
-                      ${rtwIncludesBull ? 'bg-forest' : 'bg-line'}
-                    `}>
-                      <div className={`
-                        absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm
-                        ${rtwIncludesBull ? 'left-6' : 'left-1'}
-                      `} />
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="p-6 bg-panel border-t border-line">
-              <button
-                onClick={handleStartRTW}
-                className="
-                  w-full py-4 rounded-xl bg-gold
-                  font-sans font-bold text-lg text-white
-                  hover:bg-gold-deep active:scale-[0.98] transition-all duration-200
-                  shadow-[0_4px_14px_rgba(0, 0, 0, 0.4)]
-                "
-              >
-                START MATCH
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
     </div>
+  );
+}
+
+function ModeRow({ icon, accent, title, subtitle, badge, onClick }: {
+  icon: ReactNode;
+  accent: Accent;
+  title: string;
+  subtitle: string;
+  badge: ReactNode;
+  onClick?: () => void;
+}) {
+  const a = ACCENTS[accent];
+  const disabled = !onClick;
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="soft-card soft-press w-full flex items-center gap-3.5 p-2.5 pr-4 text-left disabled:active:scale-100"
+    >
+      <span
+        className={`w-[54px] h-[54px] rounded-[16px] flex items-center justify-center shrink-0 ${disabled ? 'opacity-50' : ''}`}
+        style={{ background: a.tint, color: a.ink }}
+      >
+        {icon}
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className={`block text-[18px] font-semibold tracking-display truncate ${disabled ? 'text-subtle' : 'text-slate'}`}>{title}</span>
+        <span className="block mt-0.5 text-[14px] font-medium text-subtle truncate">{subtitle}</span>
+      </span>
+      {badge}
+    </button>
   );
 }

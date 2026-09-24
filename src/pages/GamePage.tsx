@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { House, LogOut, RotateCcw, Target, Trophy } from 'lucide-react';
+import { House, LogOut, RotateCcw, ScrollText, Target, Trophy, X } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import { ScoringView } from '../components/scoring/ScoringView';
 import { ScoreDisplay } from '../components/game/ScoreDisplay';
 import { RoundHistory } from '../components/game/RoundHistory';
 import { getEngine } from '../core/gameModeRegistry';
+import { ConfirmDialog } from '../components/shared/SoftUI';
+import { ACCENTS, SLOT_ACCENTS } from '../components/shared/softTokens';
 import type { DartThrow } from '../core/types';
 import bustSound from '../assets/bust.mp3';
 import hitSound from '../assets/hit.mp3';
@@ -52,35 +54,25 @@ export function GamePage() {
 
   if (!gameState) {
     return (
-      <div className="relative flex h-full flex-col overflow-hidden bg-cream bg-dart-texture px-6 py-7 text-ink">
-        <div className="relative z-10 flex items-center gap-2">
-          <span className="h-[2px] w-4 bg-gold-deep" />
-          <span className="font-sans text-[10px] font-bold uppercase tracking-[2.4px] text-gold-deep">
-            Match Centre
-          </span>
-        </div>
-        <main className="relative z-10 flex flex-1 flex-col items-center justify-center pb-12 text-center">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-gold bg-panel shadow-[0_5px_16px_rgba(0, 0, 0, 0.08)]">
-            <Target size={38} strokeWidth={1.5} className="text-forest" />
-          </div>
-          <div className="w-full rounded-[20px] border border-line border-t-[3px] border-t-forest bg-panel px-6 py-7 shadow-[0_5px_18px_rgba(0, 0, 0, 0.06)]">
-            <p className="mb-2 font-sans text-[10px] font-bold uppercase tracking-[2.4px] text-gold-deep">Ready when you are</p>
-            <h1 className="font-display text-3xl font-black text-forest-deep">No active game</h1>
-            <p className="mx-auto mt-3 max-w-[240px] text-sm leading-6 text-muted">
+      <div className="flex h-full flex-col items-center justify-center bg-canvas px-4 text-slate">
+        <section className="soft-shell w-full p-2 soft-rise">
+          <div className="soft-card px-6 pt-8 pb-6 text-center">
+            <span className="mx-auto w-16 h-16 rounded-[20px] bg-track flex items-center justify-center text-slate-soft">
+              <Target size={28} strokeWidth={2} />
+            </span>
+            <h1 className="mt-5 text-[26px] font-semibold tracking-display">No active game</h1>
+            <p className="mx-auto mt-2 max-w-[260px] text-[15px] leading-relaxed text-subtle">
               Start a match from the home screen to begin scoring.
             </p>
-            <button
-              onClick={() => navigate('/')}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-forest px-5 py-3 font-sans text-sm font-bold text-white shadow-[0_4px_14px_rgba(0, 0, 0, 0.28)] transition-all hover:bg-forest-deep active:scale-[0.98]"
-            >
-              <House size={16} strokeWidth={2.2} />
-              Go to home
-            </button>
           </div>
-        </main>
-        <footer className="relative z-10 border-t border-line pt-4 text-center font-sans text-[10px] font-semibold uppercase tracking-[2px] text-muted">
-          Scoreboard — V1.0
-        </footer>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-2 w-full h-[56px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[17px] font-semibold"
+          >
+            <House size={18} strokeWidth={2.3} />
+            Go to home
+          </button>
+        </section>
       </div>
     );
   }
@@ -122,89 +114,84 @@ export function GamePage() {
   // Winner overlay
   if (winnerVisible && gameState.status === 'finished') {
     const winner = gameState.players.find((p) => p.participantId === gameState.winnerId);
+    const winnerIndex = gameState.players.findIndex((p) => p.participantId === gameState.winnerId);
+    const winnerAccent = ACCENTS[SLOT_ACCENTS[Math.max(0, winnerIndex) % SLOT_ACCENTS.length]];
     return (
-      <div className="relative flex h-full flex-col overflow-hidden bg-cream bg-dart-texture px-6 py-7 text-ink">
-        <div className="relative z-10 flex items-center gap-2">
-          <span className="h-[2px] w-4 bg-gold-deep" />
-          <span className="font-sans text-[10px] font-bold uppercase tracking-[2.4px] text-gold-deep">Match complete</span>
-        </div>
-        <main className="relative z-10 flex flex-1 flex-col items-center justify-center pb-8 text-center">
-          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-gold bg-panel text-gold-deep shadow-[0_5px_16px_rgba(0, 0, 0, 0.08)]">
-            <Trophy size={37} strokeWidth={1.5} />
+      <div className="flex h-full flex-col items-center justify-center bg-canvas px-4 text-slate">
+        <section className="soft-shell w-full p-2 soft-rise">
+          <div className="soft-card px-6 pt-8 pb-6 text-center">
+            <span
+              className="mx-auto w-16 h-16 rounded-[20px] flex items-center justify-center"
+              style={{ background: winnerAccent.tint, color: winnerAccent.ink }}
+            >
+              <Trophy size={28} strokeWidth={2} />
+            </span>
+            <p className="mt-5 text-[15px] font-medium text-subtle">Match complete</p>
+            <h1 className="mt-1 text-[34px] leading-tight font-semibold tracking-display truncate">
+              {winner?.displayName ?? 'Player'} wins.
+            </h1>
+            <p className="mt-2 text-[15px] text-subtle tabular-nums">Finished in {winner?.dartsThrown ?? 0} darts</p>
           </div>
-          <div className="w-full rounded-[20px] border border-line border-t-[3px] border-t-gold bg-panel px-6 py-7 shadow-[0_5px_18px_rgba(0, 0, 0, 0.06)]">
-            <p className="mb-2 font-sans text-[10px] font-bold uppercase tracking-[2.4px] text-gold-deep">Winner</p>
-            <h1 className="font-display text-4xl font-black text-forest-deep">{winner?.displayName ?? 'Player'}</h1>
-            <p className="mt-3 text-sm text-muted">Finished in {winner?.dartsThrown ?? 0} darts thrown</p>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => { setWinnerVisible(false); setScoringMode('grid'); resetGame(); navigate('/'); }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line bg-cream px-3 py-3 font-sans text-sm font-bold text-forest transition-colors hover:border-gold hover:bg-panel active:scale-[0.98]"
-              >
-                <House size={16} strokeWidth={2.2} />
-                Home
-              </button>
-              <button
-                onClick={() => {
-                  setWinnerVisible(false);
-                  setScoringMode('grid');
-                  // Rematch with the same players and rules.
-                  const store = useGameStore.getState();
-                  store.startLocalGame(
-                    gameState.players.map((p, index) => ({
-                      id: p.participantId,
-                      type: 'local' as const,
-                      displayName: p.displayName,
-                      avatarUrl: p.avatarUrl,
-                      displayOrder: index,
-                    })),
-                    gameState.config as any,
-                  );
-                }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-forest px-3 py-3 font-sans text-sm font-bold text-white shadow-[0_4px_14px_rgba(0, 0, 0, 0.28)] transition-all hover:bg-forest-deep active:scale-[0.98]"
-              >
-                <RotateCcw size={16} strokeWidth={2.2} />
-                Rematch
-              </button>
-            </div>
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={() => { setWinnerVisible(false); setScoringMode('grid'); resetGame(); navigate('/'); }}
+              className="flex-1 h-[56px] rounded-full soft-float soft-press flex items-center justify-center gap-2 text-[16px] font-semibold text-slate"
+            >
+              <House size={18} strokeWidth={2.3} />
+              Home
+            </button>
+            <button
+              onClick={() => {
+                setWinnerVisible(false);
+                setScoringMode('grid');
+                // Rematch with the same players and rules.
+                const store = useGameStore.getState();
+                store.startLocalGame(
+                  gameState.players.map((p, index) => ({
+                    id: p.participantId,
+                    type: 'local' as const,
+                    displayName: p.displayName,
+                    avatarUrl: p.avatarUrl,
+                    displayOrder: index,
+                  })),
+                  gameState.config as any,
+                );
+              }}
+              className="flex-1 h-[56px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold"
+            >
+              <RotateCcw size={18} strokeWidth={2.3} />
+              Rematch
+            </button>
           </div>
-        </main>
-        <footer className="relative z-10 border-t border-line pt-4 text-center font-sans text-[10px] font-semibold uppercase tracking-[2px] text-muted">
-          Scoreboard — V1.0
-        </footer>
+        </section>
       </div>
     );
   }
 
   return (
     <div
-      className={`relative flex flex-col h-full min-h-0 overflow-hidden bg-cream bg-dart-texture text-ink ${bustFlash ? 'bust-flash' : ''}`}
+      className={`relative flex flex-col h-full min-h-0 overflow-hidden bg-canvas text-slate ${bustFlash ? 'bust-flash' : ''}`}
     >
       {/* ── Top bar ── */}
-      <header className="flex items-center justify-between px-4 pt-[max(10px,env(safe-area-inset-top))] pb-2.5 border-b border-line bg-panel z-10 shadow-[0_2px_10px_rgba(0, 0, 0, 0.04)]">
+      <header className="flex items-center justify-between gap-3 px-3 pt-[max(8px,env(safe-area-inset-top))] pb-1.5 z-10">
         <button
           onClick={() => setShowExitConfirm(true)}
-          className="text-muted hover:text-forest transition-colors text-sm font-display font-bold"
+          className="w-9 h-9 rounded-full soft-float soft-press flex items-center justify-center text-slate-soft"
           aria-label="Exit game"
         >
-          ← Exit
+          <X size={18} strokeWidth={2.4} />
         </button>
-        <div className="flex items-center gap-2">
-          <span className="text-forest-deep font-display text-[11px] font-bold uppercase tracking-widest">
-            {engine.displayName} · Rnd {gameState.currentRound}
-          </span>
+        <div className="flex items-baseline gap-1.5 min-w-0">
+          <span className="text-[15px] font-semibold text-slate truncate">{engine.displayName}</span>
+          <span className="text-[14px] font-medium text-subtle tabular-nums shrink-0">· Round {gameState.currentRound}</span>
         </div>
         <button
           onClick={() => setShowHistory(!showHistory)}
-          className={`
-            text-[11px] font-display font-bold uppercase tracking-wider
-            transition-colors
-            ${showHistory ? 'text-gold-deep' : 'text-muted hover:text-forest'}
-          `}
+          className={`w-9 h-9 rounded-full soft-press flex items-center justify-center transition-colors ${showHistory ? 'soft-primary' : 'soft-float text-slate-soft'}`}
           aria-label="Toggle history"
           aria-expanded={showHistory}
         >
-          📜 Log
+          <ScrollText size={17} strokeWidth={2.2} />
         </button>
       </header>
 
@@ -221,6 +208,7 @@ export function GamePage() {
               startingScore={startingScore}
               gameMode={gameState.gameMode}
               isBust={gameState.gameMode === 'x01' && idx === gameState.currentPlayerIndex && gameState.isCurrentRoundBust}
+              accent={SLOT_ACCENTS[idx % SLOT_ACCENTS.length]}
               compact
             />
           ))}
@@ -237,6 +225,7 @@ export function GamePage() {
               startingScore={startingScore}
               gameMode={gameState.gameMode}
               isBust={gameState.gameMode === 'x01' && idx === gameState.currentPlayerIndex && gameState.isCurrentRoundBust}
+              accent={SLOT_ACCENTS[idx % SLOT_ACCENTS.length]}
             />
           ))}
         </div>
@@ -245,7 +234,7 @@ export function GamePage() {
       {/* ── Round total row ── */}
       <div className="flex items-center justify-center px-3 py-0.5 z-10 relative">
         <div
-          className={`text-[11px] text-muted font-sans font-semibold tracking-wide uppercase ${
+          className={`text-[12px] text-subtle font-medium tabular-nums ${
             gameState.currentDartsInRound.length > 0 ? '' : 'invisible'
           }`}
         >
@@ -277,14 +266,14 @@ export function GamePage() {
 
       {showHistory && (
         <div
-          className="absolute inset-0 z-20 flex items-end bg-forest-deep/30 backdrop-blur-[2px]"
+          className="absolute inset-0 z-20 flex items-end bg-[rgba(20,24,32,0.32)] backdrop-blur-[6px] soft-scrim"
           role="dialog"
           aria-modal="true"
           aria-labelledby="match-log-title"
           onClick={() => setShowHistory(false)}
         >
           <section
-            className={`ios-sheet w-full rounded-t-[28px] bg-panel shadow-[0_-12px_36px_rgba(0, 0, 0, 0.2)] ${isHistoryDragging ? '' : 'transition-transform duration-200 ease-out'}`}
+            className={`ios-sheet w-full rounded-t-[32px] bg-shell shadow-[0_-12px_40px_rgba(20,24,32,0.18)] ${isHistoryDragging ? '' : 'transition-transform duration-200 ease-out'}`}
             onClick={(event) => event.stopPropagation()}
             style={isHistoryDragging ? { transform: `translateY(${historyDragOffset}px)` } : undefined}
           >
@@ -317,30 +306,29 @@ export function GamePage() {
                 setHistoryDragOffset(0);
               }}
             >
-              <div className="h-1.5 w-9 rounded-full bg-muted/35" />
+              <span className="w-9 h-[5px] rounded-full bg-[#D5D6DA]" />
             </div>
-            <header className="flex items-center justify-between px-5 pb-4 pt-3">
-              <div className="w-12" />
-              <div className="text-center">
-                <p className="font-sans text-[10px] font-bold uppercase tracking-[2.2px] text-gold-deep">Match history</p>
-                <h2 id="match-log-title" className="mt-0.5 font-display text-xl font-black text-forest-deep">Score log</h2>
+            <header className="flex items-center justify-between px-6 pb-4 pt-1">
+              <div className="flex items-center gap-2.5 text-slate-soft">
+                <ScrollText size={20} strokeWidth={2.2} />
+                <h2 id="match-log-title" className="text-[21px] font-semibold tracking-display leading-none">Score log</h2>
               </div>
               <button
                 onClick={() => setShowHistory(false)}
-                className="h-8 w-12 rounded-full bg-cream font-sans text-xs font-bold text-forest transition-colors hover:bg-line"
+                className="h-9 px-4 rounded-full soft-float soft-press text-[14px] font-semibold text-slate"
                 aria-label="Close score log"
               >
                 Done
               </button>
             </header>
-            <div className="max-h-[62vh] overflow-y-auto border-y border-line">
+            <div className="mx-4 max-h-[62vh] overflow-y-auto soft-card">
               <RoundHistory
                 history={gameState.roundHistory}
                 players={gameState.players}
                 maxRows={Math.max(gameState.roundHistory.length, 8)}
               />
             </div>
-            <div className="pb-[max(16px,env(safe-area-inset-bottom))] pt-4 text-center font-sans text-[10px] font-semibold uppercase tracking-[1.8px] text-muted">
+            <div className="pb-[max(16px,env(safe-area-inset-bottom))] pt-3 text-center text-[13px] font-medium text-subtle tabular-nums">
               {gameState.roundHistory.length} completed {gameState.roundHistory.length === 1 ? 'turn' : 'turns'}
             </div>
           </section>
@@ -348,35 +336,16 @@ export function GamePage() {
       )}
 
       {showExitConfirm && (
-        <div
-          className="absolute inset-0 z-30 flex items-center justify-center bg-forest-deep/45 px-6 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="exit-game-title"
-        >
-          <div className="w-full max-w-sm rounded-[20px] border border-line border-t-[3px] border-t-gold bg-panel p-6 text-center shadow-[0_16px_40px_rgba(0, 0, 0, 0.24)]">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-forest/10 text-forest">
-              <LogOut size={25} strokeWidth={1.7} />
-            </div>
-            <p className="mt-4 font-sans text-[10px] font-bold uppercase tracking-[2.4px] text-gold-deep">Leave match</p>
-            <h2 id="exit-game-title" className="mt-1 font-display text-2xl font-black text-forest-deep">Exit this game?</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">Your current match will be discarded and you’ll return home.</p>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setShowExitConfirm(false)}
-                className="flex-1 rounded-xl border border-line bg-cream px-4 py-3 font-sans text-sm font-bold text-forest transition-colors hover:border-gold hover:bg-panel active:scale-[0.98]"
-              >
-                Keep playing
-              </button>
-              <button
-                onClick={() => { setScoringMode('grid'); resetGame(); navigate('/'); }}
-                className="flex-1 rounded-xl bg-forest px-4 py-3 font-sans text-sm font-bold text-white shadow-[0_4px_14px_rgba(0, 0, 0, 0.28)] transition-all hover:bg-forest-deep active:scale-[0.98]"
-              >
-                Exit game
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          icon={LogOut}
+          title="Exit this game?"
+          message="Your current match will be discarded and you'll return home."
+          cancelLabel="Keep playing"
+          confirmLabel="Exit game"
+          destructive
+          onCancel={() => setShowExitConfirm(false)}
+          onConfirm={() => { setScoringMode('grid'); resetGame(); navigate('/'); }}
+        />
       )}
     </div>
   );

@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PlayerState } from '../../core/types';
+import { Avatar } from '../shared/SoftUI';
+import { ACCENTS } from '../shared/softTokens';
+import type { Accent } from '../shared/softTokens';
 
 interface ScoreDisplayProps {
   player: PlayerState;
@@ -10,6 +13,8 @@ interface ScoreDisplayProps {
   gameMode?: string;
   isBust?: boolean;
   compact?: boolean;
+  /** Seat color, matching the player's slot from match setup */
+  accent?: Accent;
 }
 
 export function ScoreDisplay({
@@ -21,7 +26,9 @@ export function ScoreDisplay({
   gameMode,
   isBust = false,
   compact = false,
+  accent = 'mint',
 }: ScoreDisplayProps) {
+  const a = ACCENTS[accent];
   const prevScore = useRef<number | string | null>(null);
   const [animate, setAnimate] = useState(false);
 
@@ -30,14 +37,14 @@ export function ScoreDisplay({
 
   if (gameMode === 'around_the_clock') {
     mainScore = player.score.currentTarget as string | number;
-    if (mainScore === 25) mainScore = 'BULL';
+    if (mainScore === 25) mainScore = 'Bull';
 
     // User requested hit rate per dart
     const targetsHit = player.score.targetsHit as number || 0;
     const hitRate = player.dartsThrown > 0
       ? Math.round((targetsHit / player.dartsThrown) * 100)
       : 0;
-    statsText = `Hit Rate ${hitRate}%`;
+    statsText = `Hit rate ${hitRate}%`;
   } else if (gameMode === 'round_the_world') {
     mainScore = player.score.points as number;
     const target = player.score.currentTarget as string | number;
@@ -45,7 +52,7 @@ export function ScoreDisplay({
     const hitRate = player.dartsThrown > 0
       ? Math.round((targetsHit / player.dartsThrown) * 100)
       : 0;
-    statsText = `Target: ${target === 25 ? 'BULL' : target} | Hit Rate ${hitRate}%`;
+    statsText = `Target ${target === 25 ? 'Bull' : target} · ${hitRate}%`;
   } else {
     mainScore = player.score.scoreLeft as number;
     // Dart averages in X01 are conventionally shown over three darts,
@@ -76,39 +83,32 @@ export function ScoreDisplay({
       <div
         className={`
           snap-start flex-1 shrink-0 flex flex-col items-center gap-1
-          rounded-[14px] px-3 py-2 transition-all duration-300 relative overflow-hidden
+          rounded-[18px] px-3 py-2 transition-all duration-300 relative overflow-hidden
           min-w-[80px]
           ${isCurrentPlayer
-            ? `bg-panel border-[1.5px] shadow-[0_4px_16px_rgba(0, 0, 0, 0.06)] ${isBust ? 'border-[#A63B37] score-card-bust' : 'border-forest'}`
-            : 'bg-cream border border-line opacity-70 shadow-sm'
+            ? `bg-white shadow-[0_1px_2px_rgba(20,24,32,0.05),0_10px_24px_-14px_rgba(20,24,32,0.22)] ${isBust ? 'ring-2 ring-[#D6453D] score-card-bust' : ''}`
+            : 'bg-track/70 opacity-75'
           }
         `}
       >
         {/* Avatar */}
-        <div
-          className={`
-            w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0
-            ${isCurrentPlayer ? 'bg-forest text-white' : 'bg-line text-muted'}
-          `}
-        >
-          {player.avatarUrl
-            ? <img src={player.avatarUrl} className="w-7 h-7 rounded-full object-cover" alt={player.displayName} />
-            : player.displayName.charAt(0).toUpperCase()
-          }
-        </div>
+        {player.avatarUrl
+          ? <img src={player.avatarUrl} className="w-7 h-7 rounded-full object-cover shrink-0" alt={player.displayName} />
+          : <Avatar name={player.displayName} size={28} accent={accent} />
+        }
 
         {/* Name */}
-        <p className={`font-sans font-bold text-[9px] leading-none truncate w-full text-center ${isCurrentPlayer ? 'text-forest-deep' : 'text-muted'}`}>
+        <p className={`font-semibold text-[11px] leading-none truncate w-full text-center ${isCurrentPlayer ? 'text-slate' : 'text-slate-soft'}`}>
           {player.displayName}
         </p>
 
         {/* Main score */}
         <div
           className={`
-            font-display font-black leading-none
+            font-semibold tracking-display tabular-nums leading-none
             ${animate ? 'score-count-enter' : ''}
             ${isBust ? 'score-crack' : ''}
-            ${isCurrentPlayer ? 'text-forest-deep' : 'text-muted'}
+            ${isCurrentPlayer ? 'text-slate' : 'text-slate-soft'}
           `}
           style={{ fontSize: 'clamp(1.4rem, 5vw, 1.75rem)' }}
         >
@@ -118,9 +118,10 @@ export function ScoreDisplay({
         {/* Compact cards are used for 3+ player games. Keep the average
             visible, or replace it with the active player's checkout route. */}
         <p
-          className={`min-h-[1.25rem] w-full px-0.5 text-center text-[8px] font-bold uppercase leading-[0.6rem] ${
-            isCurrentPlayer && checkoutHint ? 'text-gold-deep' : 'text-muted'
+          className={`min-h-[1.25rem] w-full px-0.5 text-center text-[10px] font-medium leading-[0.65rem] ${
+            isCurrentPlayer && checkoutHint ? '' : 'text-subtle'
           }`}
+          style={isCurrentPlayer && checkoutHint ? { color: a.ink } : undefined}
         >
           {compactDetail}
         </p>
@@ -133,8 +134,9 @@ export function ScoreDisplay({
                 key={i}
                 className={`
                   w-1.5 h-1.5 rounded-full transition-all duration-200
-                  ${i < dartsInRound ? 'bg-forest scale-110' : 'bg-line'}
+                  ${i < dartsInRound ? 'scale-110' : 'bg-track'}
                 `}
+                style={i < dartsInRound ? { background: a.solid } : undefined}
               />
             ))}
           </div>
@@ -147,10 +149,10 @@ export function ScoreDisplay({
   return (
     <div
       className={`
-        rounded-[18px] p-2.5 transition-all duration-300 relative overflow-hidden
+        rounded-[22px] p-2.5 transition-all duration-300 relative overflow-hidden
         ${isCurrentPlayer
-          ? `bg-panel border-[1.5px] shadow-[0_4px_16px_rgba(0, 0, 0, 0.06)] ${isBust ? 'border-[#A63B37] score-card-bust' : 'border-forest'}`
-          : 'bg-cream border border-line opacity-75 shadow-sm'
+          ? `bg-white shadow-[0_1px_2px_rgba(20,24,32,0.05),0_10px_24px_-14px_rgba(20,24,32,0.22)] ${isBust ? 'ring-2 ring-[#D6453D] score-card-bust' : ''}`
+          : 'bg-track/70 opacity-75'
         }
       `}
     >
@@ -158,23 +160,16 @@ export function ScoreDisplay({
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-2">
           {/* Avatar */}
-          <div
-            className={`
-              w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0
-              ${isCurrentPlayer ? 'bg-forest text-white' : 'bg-muted text-cream'}
-            `}
-          >
-            {player.avatarUrl
-              ? <img src={player.avatarUrl} className="w-7 h-7 rounded-full object-cover" alt={player.displayName} />
-              : player.displayName.charAt(0).toUpperCase()
-            }
-          </div>
+          {player.avatarUrl
+            ? <img src={player.avatarUrl} className="w-7 h-7 rounded-full object-cover shrink-0" alt={player.displayName} />
+            : <Avatar name={player.displayName} size={28} accent={accent} />
+          }
           <div>
-            <p className={`font-sans font-bold text-xs leading-none ${isCurrentPlayer ? 'text-forest-deep' : 'text-muted'}`}>
+            <p className={`font-semibold text-[13px] leading-none ${isCurrentPlayer ? 'text-slate' : 'text-slate-soft'}`}>
               {player.displayName}
             </p>
             {isCurrentPlayer && (
-              <p className="text-[9px] text-gold-deep font-bold uppercase tracking-[1.5px] leading-none mt-1">
+              <p className="text-[11px] font-medium leading-none mt-1" style={{ color: a.ink }}>
                 Your turn
               </p>
             )}
@@ -189,8 +184,9 @@ export function ScoreDisplay({
                 key={i}
                 className={`
                   w-1.5 h-1.5 rounded-full transition-all duration-200
-                  ${i < dartsInRound ? 'bg-forest scale-110' : 'bg-line'}
+                  ${i < dartsInRound ? 'scale-110' : 'bg-track'}
                 `}
+                style={i < dartsInRound ? { background: a.solid } : undefined}
               />
             ))}
           </div>
@@ -200,10 +196,10 @@ export function ScoreDisplay({
       {/* Main score */}
       <div
         className={`
-          relative font-display font-black text-center leading-none mb-1
+          relative font-semibold tracking-display tabular-nums text-center leading-none mb-1
           ${animate ? 'score-count-enter' : ''}
           ${isBust ? 'score-crack' : ''}
-          ${isCurrentPlayer ? 'text-forest-deep' : 'text-muted'}
+          ${isCurrentPlayer ? 'text-slate' : 'text-slate-soft'}
         `}
         style={{ fontSize: 'clamp(1.9rem, 7vw, 2.6rem)' }}
       >
@@ -221,12 +217,13 @@ export function ScoreDisplay({
       </div>
 
       {/* Stats row */}
-      <div className={`flex justify-between items-center min-h-[14px] text-[9px] font-bold uppercase tracking-[1px] ${isCurrentPlayer ? 'text-forest' : 'text-muted/70'}`}>
+      <div className={`flex justify-between items-center min-h-[14px] text-[11px] font-medium tabular-nums ${isCurrentPlayer ? 'text-slate-soft' : 'text-subtle'}`}>
         <span className="whitespace-nowrap">{player.dartsThrown} darts</span>
         <span
-          className={`text-gold-deep whitespace-nowrap truncate px-1 ${
+          className={`font-semibold whitespace-nowrap truncate px-1 ${
             checkoutHint && isCurrentPlayer ? '' : 'invisible'
           }`}
+          style={{ color: a.ink }}
         >
           ↳ {checkoutHint}
         </span>

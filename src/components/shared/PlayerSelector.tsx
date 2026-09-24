@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { usePlayerStore } from '../../store/playerStore';
-import { Plus } from 'lucide-react';
+import { Check, UserPlus } from 'lucide-react';
+import { Avatar } from './SoftUI';
+import { ACCENTS, SLOT_ACCENTS } from './softTokens';
 
 export type SelectedPlayer = {
   id: string;
@@ -18,7 +20,7 @@ interface PlayerSelectorProps {
 export function PlayerSelector({ numPlayers, selectedPlayers, onChange }: PlayerSelectorProps) {
   const { profile } = useAuthStore();
   const { players: localPlayers, fetchPlayers, addPlayer, loading } = usePlayerStore();
-  
+
   const [newPlayerName, setNewPlayerName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
@@ -38,9 +40,12 @@ export function PlayerSelector({ numPlayers, selectedPlayers, onChange }: Player
     ...localPlayers.map(p => ({ id: p.id, name: p.name, type: 'local' as const }))
   ];
 
+  const isFull = selectedPlayers.length >= numPlayers;
+  const remaining = numPlayers - selectedPlayers.length;
+
   const handleToggle = (player: SelectedPlayer) => {
     const isSelected = selectedPlayers.some(p => p.id === player.id);
-    
+
     if (isSelected) {
       onChange(selectedPlayers.filter(p => p.id !== player.id));
     } else {
@@ -53,7 +58,7 @@ export function PlayerSelector({ numPlayers, selectedPlayers, onChange }: Player
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPlayerName.trim()) return;
-    
+
     setIsAdding(true);
     const added = await addPlayer(newPlayerName);
     if (added) {
@@ -67,49 +72,101 @@ export function PlayerSelector({ numPlayers, selectedPlayers, onChange }: Player
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
-        {allAvailable.map(player => {
-          const isSelected = selectedPlayers.some(p => p.id === player.id);
-          const index = selectedPlayers.findIndex(p => p.id === player.id);
-          
+    <div className="flex flex-col">
+
+      {/* Slot bars — one per seat, filled in throw order */}
+      <div className="flex gap-1.5">
+        {Array.from({ length: numPlayers }, (_, i) => {
+          const filled = i < selectedPlayers.length;
           return (
-            <button
-              key={player.id}
-              onClick={() => handleToggle(player)}
-              className={`
-                px-4 py-2.5 rounded-xl font-sans font-bold text-sm transition-all border
-                ${isSelected 
-                  ? 'bg-forest border-forest text-white shadow-md' 
-                  : 'bg-panel border-line text-forest-deep hover:border-gold'
-                }
-              `}
-            >
-              {player.name}
-              {isSelected && <span className="ml-2 text-white/70 text-[10px]">P{index + 1}</span>}
-            </button>
+            <span
+              key={i}
+              className={`flex-1 h-3 rounded-full transition-colors duration-300 ${filled ? 'soft-hatch' : 'soft-hatch-empty'}`}
+              style={filled ? { backgroundColor: ACCENTS[SLOT_ACCENTS[i]].solid } : undefined}
+            />
           );
         })}
       </div>
 
-      <form onSubmit={handleAddPlayer} className="flex gap-2 mt-2">
+      <div className="flex items-center justify-between mt-3 min-h-8">
+        <div className="flex items-center gap-3">
+          {selectedPlayers.map((p, i) => (
+            <span key={p.id} className="flex items-center gap-1.5">
+              <Avatar name={p.name} size={26} accent={SLOT_ACCENTS[i]} />
+              <span className="text-[14px] font-semibold tabular-nums" style={{ color: ACCENTS[SLOT_ACCENTS[i]].ink }}>
+                P{i + 1}
+              </span>
+            </span>
+          ))}
+        </div>
+        <span className="text-[14px] font-medium text-subtle tabular-nums">
+          {remaining > 0 ? `${remaining} left` : 'All set'}
+        </span>
+      </div>
+
+      <div className="h-px bg-line/70 my-3" />
+
+      {/* Roster */}
+      <ul className="flex flex-col">
+        {allAvailable.map(player => {
+          const index = selectedPlayers.findIndex(p => p.id === player.id);
+          const isSelected = index !== -1;
+          const disabled = !isSelected && isFull;
+          const accent = isSelected ? ACCENTS[SLOT_ACCENTS[index]] : null;
+
+          return (
+            <li key={player.id}>
+              <button
+                type="button"
+                onClick={() => handleToggle(player)}
+                disabled={disabled}
+                aria-pressed={isSelected}
+                className="w-full flex items-center gap-3.5 py-2 text-left transition-opacity disabled:opacity-40 [-webkit-tap-highlight-color:transparent] active:opacity-70"
+              >
+                <span
+                  className={`w-[26px] h-[26px] rounded-[8px] flex items-center justify-center shrink-0 transition-all duration-200 ${
+                    isSelected ? '' : 'border-[1.5px] border-[#DCDDE1] bg-white'
+                  }`}
+                  style={accent ? { background: accent.ink } : undefined}
+                >
+                  {isSelected && <Check size={16} strokeWidth={3.2} className="text-white" />}
+                </span>
+                <span className="flex-1 min-w-0 flex items-baseline gap-2">
+                  <span className="truncate text-[16px] font-medium text-slate">{player.name}</span>
+                  {player.type === 'profile' && <span className="text-[13px] text-subtle shrink-0">You</span>}
+                </span>
+                <Avatar name={player.name} size={30} accent={isSelected ? SLOT_ACCENTS[index] : undefined} />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      {loading && allAvailable.length === 0 && (
+        <div className="py-2 text-[13px] text-subtle">Loading players…</div>
+      )}
+
+      {/* Add player — invite-style field with the action inside */}
+      <form
+        onSubmit={handleAddPlayer}
+        className="mt-3 flex items-center gap-2 h-[52px] pl-4 pr-1.5 rounded-full bg-track/70 border border-[#E4E5E8] focus-within:bg-white focus-within:border-[#D5D7DC] transition-colors"
+      >
+        <UserPlus size={18} strokeWidth={2} className="text-subtle shrink-0" />
         <input
           type="text"
-          placeholder="New player name..."
+          placeholder="Add a player"
           value={newPlayerName}
           onChange={(e) => setNewPlayerName(e.target.value)}
-          className="flex-1 px-4 py-2.5 rounded-xl bg-panel border border-line text-forest-deep placeholder-muted text-sm font-sans font-semibold focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+          className="flex-1 min-w-0 bg-transparent text-[16px] font-medium text-slate placeholder:text-subtle focus:outline-none"
         />
         <button
           type="submit"
           disabled={!newPlayerName.trim() || isAdding}
-          className="px-4 rounded-xl bg-gold text-white hover:bg-gold-deep transition-colors disabled:opacity-50 flex items-center justify-center"
+          className="h-10 px-4 rounded-full soft-primary soft-press text-[14px] font-semibold disabled:opacity-100"
         >
-          <Plus size={18} strokeWidth={3} />
+          {isAdding ? 'Adding…' : 'Add'}
         </button>
       </form>
-      
-      {loading && <div className="text-xs text-muted">Loading players...</div>}
     </div>
   );
 }

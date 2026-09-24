@@ -15,7 +15,7 @@ export function RoundHistory({ history, players, maxRows = 8 }: RoundHistoryProp
 
   if (reversed.length === 0) {
     return (
-      <div className="py-10 text-center text-xs font-display uppercase tracking-[1.8px] text-muted">
+      <div className="py-10 text-center text-[14px] font-medium text-subtle">
         No throws yet
       </div>
     );
@@ -23,9 +23,9 @@ export function RoundHistory({ history, players, maxRows = 8 }: RoundHistoryProp
 
   return (
     <div className="overflow-y-auto">
-      <table className="w-full text-xs">
+      <table className="w-full text-[14px]">
         <thead>
-          <tr className="border-b border-line bg-cream text-[10px] font-sans font-bold uppercase tracking-[1.3px] text-muted">
+          <tr className="border-b border-line/70 text-[12px] font-medium text-subtle">
             <th className="px-3 py-3 text-left">Rnd</th>
             <th className="px-2 py-3 text-left">Player</th>
             <th className="px-1 py-3 text-center">D1</th>
@@ -39,12 +39,12 @@ export function RoundHistory({ history, players, maxRows = 8 }: RoundHistoryProp
             <tr
               key={idx}
               className={`
-                border-b border-line/70
-                ${entry.isBust ? 'bg-[#A63B37]/8' : 'bg-panel'}
+                border-b border-line/60 last:border-b-0
+                ${entry.isBust ? 'bg-[#FCE9E7]/70' : ''}
               `}
             >
-              <td className="px-3 py-3 font-mono text-muted">{entry.roundNumber}</td>
-              <td className="max-w-[80px] truncate px-2 py-3 font-sans font-bold text-forest-deep">
+              <td className="px-3 py-3 text-subtle tabular-nums">{entry.roundNumber}</td>
+              <td className="max-w-[80px] truncate px-2 py-3 font-semibold text-slate">
                 {playerMap[entry.participantId] ?? '?'}
               </td>
               {[0, 1, 2].map((i) => {
@@ -54,25 +54,25 @@ export function RoundHistory({ history, players, maxRows = 8 }: RoundHistoryProp
                     {dart ? (
                       <span
                         className={`
-                          font-sans font-bold
-                          ${dart.multiplier === 3 ? 'text-gold-deep' :
-                            dart.multiplier === 2 ? 'text-forest' :
-                            'text-ink'}
+                          font-semibold tabular-nums
+                          ${dart.multiplier === 3 ? 'text-coral-ink' :
+                            dart.multiplier === 2 ? 'text-mint-ink' :
+                            'text-slate'}
                         `}
                       >
                         {throwLabel(dart)}
                       </span>
                     ) : (
-                      <span className="text-muted/50">—</span>
+                      <span className="text-subtle/60">–</span>
                     )}
                   </td>
                 );
               })}
               <td className="px-3 py-3 text-right">
                 {entry.isBust ? (
-                  <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#A63B37]">Bust</span>
+                  <span className="text-[13px] font-semibold text-[#C4413A]">Bust</span>
                 ) : (
-                  <span className="font-display font-bold text-forest-deep">
+                  <span className="font-semibold text-slate tabular-nums">
                     {entry.snapshot.scoreLeft as number}
                   </span>
                 )}

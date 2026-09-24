@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import type { DartThrow, Segment, Multiplier } from '../../core/types';
 import { throwLabel } from '../../core/types';
-import { Undo2 } from 'lucide-react';
+import { RoundFooter } from './RoundControls';
 
 // ─────────────────────────────────────────────
 // Types
@@ -63,7 +63,7 @@ const GridCell = React.memo(function GridCell({
       onClick={onClick}
       aria-label={label}
     >
-      <span className="font-display text-sm font-bold leading-none">{label}</span>
+      <span className="text-sm font-semibold leading-none">{label}</span>
       {dots && (
         <span className="text-[10px] leading-none mt-0.5 opacity-70 tracking-widest">
           {dots}
@@ -125,15 +125,12 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
       <div
         key={i}
         className={`
-          flex-1 flex items-center justify-center rounded-lg border text-sm font-bold font-display tracking-wide
+          flex-1 flex items-center justify-center rounded-full text-[14px] font-semibold tabular-nums
           transition-all duration-200
-          ${dart
-            ? 'bg-forest/10 border-forest/30 text-forest-deep'
-            : 'bg-panel border-line text-muted'
-          }
+          ${dart ? 'soft-float text-slate' : 'bg-white/55 text-subtle shadow-[inset_0_0_0_1px_rgba(20,24,32,0.05)]'}
         `}
       >
-        {dart ? throwLabel(dart) : `—`}
+        {dart ? throwLabel(dart) : '–'}
       </div>
     );
   });
@@ -155,15 +152,15 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
 
       {/* ── Dart slots tracker ─────────────────── */}
       <div className="flex gap-2 px-3 py-2 z-10 relative">
-        <span className="text-[10px] text-muted font-bold self-center mr-1 uppercase tracking-[2px]">Round</span>
+        <span className="text-[13px] text-subtle font-medium self-center mr-1">This visit</span>
         {dartSlots}
       </div>
 
       {currentTarget !== undefined ? (
         <div className="flex flex-1 flex-col px-3 pb-3">
-          <div className="mb-3 rounded-[18px] border border-line border-t-[3px] border-t-forest bg-panel px-5 py-4 text-center shadow-[0_4px_14px_rgba(0, 0, 0, 0.05)]">
-            <p className="font-sans text-[10px] font-bold uppercase tracking-[2.4px] text-gold-deep">Current target</p>
-            <p className="mt-1 font-display text-5xl font-black leading-none text-forest-deep">{targetLabel}</p>
+          <div className="mb-3 soft-card px-5 py-4 text-center">
+            <p className="text-[13px] font-medium text-subtle">Current target</p>
+            <p className="mt-1 text-5xl font-semibold tracking-display leading-none text-slate tabular-nums">{targetLabel}</p>
           </div>
 
           <div className={`grid flex-1 gap-2 ${targetThrows.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
@@ -176,7 +173,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
                   onClick={() => handleDart({ segment: currentTarget, multiplier })}
                   aria-label={label}
                 >
-                  <span className="font-display text-xl font-black leading-none">{label}</span>
+                  <span className="text-xl font-semibold leading-none">{label}</span>
                 </button>
               );
             })}
@@ -187,7 +184,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
             onClick={() => handleDart({ segment: 0, multiplier: 1 })}
             aria-label="Miss"
           >
-            <span className="font-display text-base font-black tracking-[2px]">MISS</span>
+            <span className="text-base font-semibold">Miss</span>
           </button>
         </div>
       ) : (
@@ -201,7 +198,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
           onClick={() => handleDart({ segment: 0, multiplier: 1 })}
           aria-label="Miss"
         >
-          <span className="font-display font-bold text-xs tracking-[2px]">MISS</span>
+          <span className="font-semibold text-[13px]">Miss</span>
         </button>
 
         {/* BULL (25) */}
@@ -210,7 +207,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
           onClick={() => handleDart({ segment: 25, multiplier: 1 })}
           aria-label="Bull 25"
         >
-          <span className="font-display font-bold text-xs tracking-[2px]">BULL</span>
+          <span className="font-semibold text-[13px]">Bull</span>
           <span className="text-[9px] opacity-80 leading-none mt-0.5">25</span>
         </button>
 
@@ -220,7 +217,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
           onClick={() => handleDart({ segment: 25, multiplier: 2 })}
           aria-label="Bullseye 50"
         >
-          <span className="font-display font-bold text-xs tracking-[2px]">BULL</span>
+          <span className="font-semibold text-[13px]">Bull</span>
           <span className="text-[9px] opacity-80 leading-none mt-0.5">50 ●</span>
         </button>
       </div>
@@ -253,40 +250,7 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
       )}
 
       {/* ── Footer: Undo + Next Round ─────────── */}
-      <div className="grid grid-cols-4 gap-2 px-3 pt-2 pb-[max(8px,env(safe-area-inset-bottom))] border-t border-line bg-cream z-10 relative shadow-[0_-4px_10px_rgba(0, 0, 0, 0.02)]">
-        {/* UNDO — 1/4 width */}
-        <button
-          onClick={onUndo}
-          disabled={!canUndo}
-          className="
-            col-span-1 flex flex-col items-center justify-center gap-0.5
-            rounded-[14px] border border-line bg-panel
-            py-2 font-sans font-bold text-[9px] tracking-[2px] text-muted uppercase
-            hover:border-gold disabled:opacity-40 disabled:cursor-not-allowed
-            active:scale-95 transition-all duration-100
-          "
-          aria-label="Undo last dart"
-        >
-          <Undo2 size={15} strokeWidth={2.5} className="mb-0.5" />
-          <span>Undo</span>
-        </button>
-
-        {/* NEXT ROUND — 3/4 width */}
-        <button
-          onClick={onNextRound}
-          className="
-            col-span-3 flex items-center justify-center
-            rounded-[14px] font-sans font-bold text-sm tracking-[2px] uppercase
-            bg-gold hover:bg-gold-deep
-            text-white shadow-[0_4px_14px_rgba(0, 0, 0, 0.3)]
-            active:scale-[0.98] transition-all duration-200
-            py-2
-          "
-          aria-label="Next round"
-        >
-          NEXT ROUND →
-        </button>
-      </div>
+      <RoundFooter onUndo={onUndo} onNextRound={onNextRound} canUndo={canUndo} className="px-3" />
 
     </div>
   );

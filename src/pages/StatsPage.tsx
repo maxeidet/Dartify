@@ -2,21 +2,19 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHistoryStore, computeX01Avg, computeHighOut, computeBestLeg } from '../store/historyStore';
 import type { GameSummary } from '../store/historyStore';
+import { ChartPie, ChevronRight, History, Trash2, Trophy, Target, Flame } from 'lucide-react';
 import { PlayerStatsModal } from '../components/game/PlayerStatsModal';
+import { Avatar, Badge, ConfirmDialog, PageHeader, Segmented, ShellTitle, StatTile } from '../components/shared/SoftUI';
+import { ModeIcon } from '../components/shared/ModeIcon';
+import { ACCENTS, MODE_ACCENTS, MODE_NAMES } from '../components/shared/softTokens';
 
 type ModeFilter = 'all' | 'x01' | 'around_the_clock' | 'round_the_world';
 
-const MODE_LABELS: Record<string, string> = {
-  x01: 'X01',
-  around_the_clock: 'Around Clock',
-  round_the_world: 'Round World',
-};
-
-const FILTERS: { value: ModeFilter; label: string }[] = [
+const FILTERS: readonly { value: ModeFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'x01', label: 'X01' },
-  { value: 'around_the_clock', label: 'Around Clock' },
-  { value: 'round_the_world', label: 'Round World' },
+  { value: 'around_the_clock', label: 'Clock' },
+  { value: 'round_the_world', label: 'World' },
 ];
 
 function formatDate(iso: string): string {
@@ -31,37 +29,47 @@ function formatTime(iso: string): string {
 
 function GameCard({ game, onClick }: { game: GameSummary; onClick: () => void }) {
   const winner = game.players.find((p) => p.winner);
-  const modeLabel = MODE_LABELS[game.gameMode] ?? game.gameMode;
+  const accent = ACCENTS[MODE_ACCENTS[game.gameMode] ?? 'mint'];
 
   return (
-    <button 
+    <button
       onClick={onClick}
-      className="bg-panel border border-line rounded-[18px] p-4 flex flex-col gap-3 text-left transition-colors hover:border-gold active:scale-[0.98]"
+      className="soft-card soft-press w-full p-3 pr-4 flex flex-col gap-3 text-left"
     >
       {/* Header row */}
-      <div className="flex items-center justify-between w-full">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-forest/10 border border-forest/20 text-forest-deep font-sans font-bold text-[10px] tracking-[1.4px] uppercase">
-          {modeLabel}
+      <div className="flex items-center gap-3 w-full">
+        <span
+          className="w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0"
+          style={{ background: accent.tint, color: accent.ink }}
+        >
+          <ModeIcon mode={game.gameMode} size={19} />
         </span>
-        <span className="text-[10px] font-medium text-muted">
-          {formatDate(game.date)} · {formatTime(game.date)}
+        <span className="flex-1 min-w-0">
+          <span className="block text-[16px] font-semibold text-slate truncate">{MODE_NAMES[game.gameMode] ?? game.gameMode}</span>
+          <span className="block text-[13px] font-medium text-subtle">
+            {formatDate(game.date)} · {formatTime(game.date)}
+          </span>
         </span>
+        <ChevronRight size={18} strokeWidth={2.2} className="text-subtle shrink-0" />
       </div>
 
       {/* Players */}
-      <div className="flex flex-col gap-1.5 w-full">
+      <div className="flex flex-col gap-2 w-full pl-1">
         {game.players.map((p) => (
-          <div key={p.participantId} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${p.winner ? 'bg-forest text-white' : 'bg-line text-muted'}`}>
-                {p.displayName.charAt(0).toUpperCase()}
-              </div>
-              <span className={`text-xs font-bold ${p.winner ? 'text-forest-deep' : 'text-muted'}`}>
+          <div key={p.participantId} className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Avatar name={p.displayName} size={26} />
+              <span className={`truncate text-[15px] font-medium ${p.winner ? 'text-slate' : 'text-slate-soft'}`}>
                 {p.displayName}
-                {p.winner && <span className="ml-1.5 text-[9px] text-gold-deep font-bold uppercase tracking-[1px]">Winner</span>}
               </span>
+              {p.winner && (
+                <Badge accent="mint">
+                  <Trophy size={12} strokeWidth={2.5} />
+                  Winner
+                </Badge>
+              )}
             </div>
-            <span className="text-[10px] text-muted font-medium tabular-nums">
+            <span className="text-[13px] text-subtle font-medium tabular-nums shrink-0">
               {p.dartsThrown} darts
             </span>
           </div>
@@ -69,15 +77,9 @@ function GameCard({ game, onClick }: { game: GameSummary; onClick: () => void })
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-line pt-2.5 w-full">
-        <span className="text-[10px] text-muted font-medium">
-          {game.totalRounds} rounds
-        </span>
-        {winner && game.gameMode === 'x01' && (
-          <span className="text-[10px] text-muted font-medium">
-            Won in {winner.dartsThrown} darts
-          </span>
-        )}
+      <div className="flex items-center justify-between border-t border-line/70 pt-2.5 w-full pl-1 text-[13px] font-medium text-subtle tabular-nums">
+        <span>{game.totalRounds} rounds</span>
+        {winner && game.gameMode === 'x01' && <span>Won in {winner.dartsThrown} darts</span>}
       </div>
     </button>
   );
@@ -98,127 +100,98 @@ export function StatsPage() {
   const highOut = computeHighOut(filtered);
   const bestLeg = computeBestLeg(filtered);
 
+  const totalDarts = filtered.reduce((sum, g) => sum + g.players.reduce((n, p) => n + p.dartsThrown, 0), 0);
+  const headline =
+    filtered.length === 0
+      ? 'Nothing here yet.'
+      : avg > 0
+        ? `${filtered.length} ${filtered.length === 1 ? 'game' : 'games'}, averaging ${avg}.`
+        : `${filtered.length} ${filtered.length === 1 ? 'game' : 'games'} played.`;
+
   return (
-    <div className="flex flex-col h-dvh overflow-y-auto w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),24px)]">
-      <div className="relative px-[22px] pt-[18px] pb-8 z-10 flex flex-col flex-1 max-w-md mx-auto w-full gap-5">
+    <div className="flex flex-col h-dvh overflow-y-auto w-full bg-canvas font-sans text-slate pt-[max(env(safe-area-inset-top),12px)] pb-[max(env(safe-area-inset-bottom),24px)]">
+      <div className="flex flex-col gap-4 px-4 pt-3 pb-8 max-w-md mx-auto w-full">
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate('/')}
-            className="text-muted hover:text-forest transition-colors font-display font-bold text-sm"
-            id="stats-back-btn"
-          >
-            ← Back
-          </button>
-          <span className="font-sans text-[11px] font-bold tracking-[2.6px] text-forest-deep uppercase">
-            Stats
-          </span>
-          <button
-            onClick={() => setShowClearConfirm(true)}
-            className="text-[10px] text-muted hover:text-red-400 transition-colors font-medium"
-            id="stats-clear-btn"
-          >
-            Clear
-          </button>
-        </div>
-
-        {/* Mode filter pills */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {FILTERS.map((f) => (
+        <PageHeader
+          title="Stats"
+          onBack={() => navigate('/')}
+          trailing={
             <button
-              key={f.value}
-              id={`filter-${f.value}`}
-              onClick={() => setFilter(f.value)}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full border font-sans font-bold text-[10px] tracking-[1.2px] uppercase transition-all ${
-                filter === f.value
-                  ? 'bg-forest border-forest text-white'
-                  : 'bg-panel border-line text-muted hover:border-gold'
-              }`}
+              onClick={() => setShowClearConfirm(true)}
+              disabled={gameHistory.length === 0}
+              aria-label="Clear history"
+              id="stats-clear-btn"
+              className="w-11 h-11 rounded-full soft-float soft-press flex items-center justify-center text-slate-soft disabled:opacity-40"
             >
-              {f.label}
+              <Trash2 size={18} strokeWidth={2.2} />
             </button>
-          ))}
-        </div>
+          }
+        />
 
-        {/* Summary Stats */}
-        <div className="bg-panel border border-line rounded-[18px] p-[18px_16px_16px] flex">
-          <div className="flex-1 px-1.5">
-            <div className="font-sans font-extrabold text-[24px] text-forest tabular-nums">
-              {avg > 0 ? avg : '—'}
-            </div>
-            <div className="mt-1.5 text-[9px] font-bold tracking-[1.6px] text-muted uppercase">Avg (X01)</div>
+        <Segmented ariaLabel="Game mode" value={filter} onChange={setFilter} options={FILTERS} />
+
+        {/* Summary */}
+        <section className="soft-shell p-2 soft-rise">
+          <div className="px-4 pt-4 pb-5">
+            <ShellTitle icon={ChartPie}>Overview</ShellTitle>
+            <p className="mt-5 text-[26px] leading-[1.18] font-semibold tracking-display text-slate">{headline}</p>
+            {filtered.length > 0 && (
+              <p className="mt-1.5 text-[15px] font-medium text-subtle">
+                {totalDarts.toLocaleString('en-GB')} darts thrown
+              </p>
+            )}
           </div>
-          <div className="flex-1 px-1.5 border-l border-line">
-            <div className="font-sans font-extrabold text-[24px] text-gold-deep tabular-nums">
-              {highOut > 0 ? highOut : '—'}
-            </div>
-            <div className="mt-1.5 text-[9px] font-bold tracking-[1.6px] text-muted uppercase">High Out</div>
+          <div className="soft-card grid grid-cols-3 p-2">
+            <StatTile icon={Target} accent="mint" value={avg} label="3-dart avg" />
+            <StatTile icon={Trophy} accent="azure" value={highOut} label="High out" divider />
+            <StatTile icon={Flame} accent="coral" value={bestLeg} label="Best leg" divider />
           </div>
-          <div className="flex-1 px-1.5 border-l border-line">
-            <div className="font-sans font-extrabold text-[24px] text-forest tabular-nums">
-              {bestLeg !== null ? bestLeg : '—'}
-            </div>
-            <div className="mt-1.5 text-[9px] font-bold tracking-[1.6px] text-muted uppercase">Best Leg</div>
-          </div>
-        </div>
+        </section>
 
         {/* Game list */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-[14px] h-[2px] bg-gold-deep" />
-            <span className="font-sans text-[11px] font-bold tracking-[2.6px] text-forest-deep uppercase">
-              {filtered.length} {filtered.length === 1 ? 'Game' : 'Games'}
-            </span>
+        <section className="soft-shell p-2 soft-rise" style={{ animationDelay: '60ms' }}>
+          <div className="px-4 pt-4 pb-4">
+            <ShellTitle
+              icon={History}
+              trailing={<span className="text-[15px] font-medium text-subtle tabular-nums">{filtered.length}</span>}
+            >
+              Games
+            </ShellTitle>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-full border border-line bg-panel flex items-center justify-center mb-4">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6 text-muted">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 3v18M3 12h18" />
-                </svg>
-              </div>
-              <p className="text-sm font-bold text-muted">No games yet</p>
-              <p className="text-xs text-muted/70 mt-1">Play a game to see your history here</p>
+            <div className="soft-card flex flex-col items-center justify-center py-12 px-6 text-center">
+              <span className="w-14 h-14 rounded-[18px] bg-track flex items-center justify-center text-subtle">
+                <Target size={24} strokeWidth={2} />
+              </span>
+              <p className="mt-4 text-[17px] font-semibold text-slate">No games yet</p>
+              <p className="mt-1 text-[14px] text-subtle">Finish a match to see it here.</p>
             </div>
           ) : (
-            filtered.map((game) => (
-              <GameCard 
-                key={game.matchId} 
-                game={game} 
-                onClick={() => setSelectedGame(game)}
-              />
-            ))
+            <div className="flex flex-col gap-2">
+              {filtered.map((game) => (
+                <GameCard
+                  key={game.matchId}
+                  game={game}
+                  onClick={() => setSelectedGame(game)}
+                />
+              ))}
+            </div>
           )}
-        </div>
+        </section>
       </div>
 
-      {/* Clear confirm dialog */}
       {showClearConfirm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-panel border border-line rounded-[22px] p-6 w-full max-w-md shadow-2xl">
-            <h2 className="font-display font-black text-xl text-forest-deep mb-2">Clear History?</h2>
-            <p className="text-sm text-muted mb-6">This will permanently delete all your game history. This cannot be undone.</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="flex-1 py-3 rounded-xl border border-line bg-cream font-sans font-bold text-sm text-forest transition-colors hover:border-gold"
-                id="stats-clear-cancel"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { clearHistory(); setShowClearConfirm(false); }}
-                className="flex-1 py-3 rounded-xl bg-red-600 font-sans font-bold text-sm text-white transition-colors hover:bg-red-700"
-                id="stats-clear-confirm"
-              >
-                Clear All
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          icon={Trash2}
+          title="Clear history?"
+          message="This permanently deletes every game in your history. It can't be undone."
+          cancelLabel="Cancel"
+          confirmLabel="Clear all"
+          destructive
+          onCancel={() => setShowClearConfirm(false)}
+          onConfirm={() => { clearHistory(); setShowClearConfirm(false); }}
+        />
       )}
 
       {/* Player Stats Modal */}

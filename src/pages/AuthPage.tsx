@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
+import { ArrowRight, Lock, Mail, User } from 'lucide-react';
 import bdcLogo from '../assets/bdc-logo-transparent.png';
+import { Segmented, SoftInput } from '../components/shared/SoftUI';
 
 export function AuthPage() {
   const session = useAuthStore((state) => state.session);
@@ -56,102 +58,95 @@ export function AuthPage() {
     }
   };
 
+  const switchMode = (signUp: boolean) => {
+    setIsSignUp(signUp);
+    setError(null);
+    setMessage(null);
+  };
+
   return (
-    <div className="flex flex-col min-h-dvh w-full bg-cream bg-dart-texture font-sans text-ink pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] px-6 items-center justify-center">
-      
-      <div className="w-full max-w-[140px] mb-8">
-        <img src={bdcLogo} alt="BDC Logo" className="w-full h-auto block" />
+    <div className="flex flex-col min-h-dvh overflow-y-auto w-full bg-canvas font-sans text-slate pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] px-4 items-center justify-center">
+
+      <div className="w-full max-w-sm flex flex-col items-center soft-rise">
+        <img src={bdcLogo} alt="BDC Logo" className="w-[120px] h-auto block" />
+        <h1 className="mt-6 text-[30px] leading-[1.12] font-semibold tracking-display text-slate text-center">
+          {isSignUp ? 'Join the oche.' : 'Welcome back.'}
+        </h1>
+        <p className="mt-2 text-[15px] font-medium text-subtle text-center">
+          {isSignUp ? 'Track your stats and save local players.' : 'Log in to keep scoring with friends.'}
+        </p>
       </div>
 
-      <div className="w-full max-w-sm bg-panel border border-line rounded-[24px] p-6 sm:p-8 shadow-xl">
-        <h2 className="font-display font-black text-2xl text-forest-deep mb-2 text-center">
-          {isSignUp ? 'Create Account' : 'Welcome Back'}
-        </h2>
-        <p className="text-sm text-muted font-medium text-center mb-6">
-          {isSignUp ? 'Sign up to track your stats and save local players.' : 'Log in to continue playing with friends.'}
-        </p>
+      <div className="w-full max-w-sm mt-7 soft-shell p-2 soft-rise" style={{ animationDelay: '60ms' }}>
+        <div className="p-2">
+          <Segmented
+            ariaLabel="Account"
+            value={isSignUp ? 'signup' : 'login'}
+            onChange={(v) => switchMode(v === 'signup')}
+            options={[
+              { value: 'login', label: 'Log in' },
+              { value: 'signup', label: 'Sign up' },
+            ]}
+          />
+        </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 text-sm font-semibold p-3 rounded-xl mb-4 text-center">
-            {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="bg-green-50 border border-green-100 text-green-700 text-sm font-semibold p-3 rounded-xl mb-4 text-center">
-            {message}
-          </div>
-        )}
-
-        <form onSubmit={handleAuth} className="flex flex-col gap-4">
-          
-          {isSignUp && (
-            <div className="flex flex-col gap-1.5">
-              <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-                Username
-              </label>
-              <input
-                type="text"
-                placeholder="DartMaster99"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required={isSignUp}
-                className="w-full px-4 py-3.5 rounded-xl bg-cream border border-line text-forest-deep placeholder-muted text-sm font-sans font-semibold focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
-              />
+        <form onSubmit={handleAuth} className="soft-card mt-1 p-4 flex flex-col gap-3">
+          {error && (
+            <div className="px-4 py-3 rounded-2xl bg-[#FCE9E7] text-[#C4413A] text-[14px] font-medium">
+              {error}
             </div>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-              Email
-            </label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3.5 rounded-xl bg-cream border border-line text-forest-deep placeholder-muted text-sm font-sans font-semibold focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
-            />
-          </div>
+          {message && (
+            <div className="px-4 py-3 rounded-2xl bg-mint-tint text-mint-ink text-[14px] font-medium">
+              {message}
+            </div>
+          )}
 
-          <div className="flex flex-col gap-1.5">
-            <label className="font-sans text-[10.5px] font-bold tracking-[2px] text-gold-deep uppercase">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3.5 rounded-xl bg-cream border border-line text-forest-deep placeholder-muted text-sm font-sans font-semibold focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+          {isSignUp && (
+            <SoftInput
+              icon={User}
+              type="text"
+              aria-label="Username"
+              placeholder="Username"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required={isSignUp}
             />
-          </div>
+          )}
+
+          <SoftInput
+            icon={Mail}
+            type="email"
+            aria-label="Email"
+            placeholder="Email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <SoftInput
+            icon={Lock}
+            type="password"
+            aria-label="Password"
+            placeholder="Password"
+            autoComplete={isSignUp ? 'new-password' : 'current-password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 w-full py-4 rounded-xl bg-gold font-sans font-bold text-[15px] text-white hover:bg-gold-deep active:scale-[0.98] transition-all duration-200 shadow-[0_4px_14px_rgba(0, 0, 0, 0.4)] disabled:opacity-70"
+            className="mt-2 w-full h-[56px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[17px] font-semibold"
           >
-            {loading ? 'Processing...' : (isSignUp ? 'SIGN UP' : 'LOG IN')}
+            {loading ? 'One moment…' : (isSignUp ? 'Create account' : 'Log in')}
+            {!loading && <ArrowRight size={18} strokeWidth={2.4} />}
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError(null);
-              setMessage(null);
-            }}
-            className="text-sm font-semibold text-forest hover:text-forest-deep transition-colors"
-          >
-            {isSignUp ? 'Already have an account? Log In' : "Don't have an account? Sign Up"}
-          </button>
-        </div>
-
       </div>
     </div>
   );

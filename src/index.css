@@ -3,8 +3,7 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────
-   Design Tokens — clean, minimal, monochrome
-   (matches the look established in ProfilePage.tsx)
+   Design Tokens
 ───────────────────────────────────────────── */
 @theme {
   /* Colors */
@@ -33,6 +32,28 @@
   --color-border:      #E5E5E7;
   --color-border-bright: #1D1D1F;
 
+  /* Soft UI — the app-wide palette */
+  --color-canvas:      #EDEDEF;
+  --color-shell:       #F6F6F7;
+  --color-slate:       #1E2530;
+  --color-slate-soft:  #6B717C;
+  --color-subtle:      #9AA0A9;
+  --color-track:       #EBEBEE;
+  --color-charcoal:    #1C1D20;
+
+  --color-mint:        #3FBF8A;
+  --color-mint-ink:    #23865C;
+  --color-mint-tint:   #E2F5EC;
+  --color-azure:       #5B7BF2;
+  --color-azure-ink:   #4863DB;
+  --color-azure-tint:  #E8EDFE;
+  --color-coral:       #F2894A;
+  --color-coral-ink:   #DB6A30;
+  --color-coral-tint:  #FDEEE4;
+  --color-orchid:      #D25AD8;
+  --color-orchid-ink:  #B743BE;
+  --color-orchid-tint: #F8E7FA;
+
   /* Typography — one sans family everywhere, no serif display face */
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Inter', system-ui, sans-serif;
@@ -56,8 +77,8 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #F0F0F2;
-  color: var(--color-ink);
+  background-color: var(--color-canvas);
+  color: var(--color-slate);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -121,15 +142,16 @@ body {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 80ms ease, background-color 80ms ease, box-shadow 80ms ease;
-  border: 1px solid var(--color-border);
+  transition: transform 80ms ease, background-color 120ms ease, box-shadow 120ms ease;
+  border: none;
   min-height: 32px;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   font-family: var(--font-sans);
   font-weight: 600;
-  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(20, 24, 32, 0.06);
 }
 
 .dartboard-surface {
@@ -157,53 +179,49 @@ body {
   opacity: 1;
 }
 
-/* Single/double/treble are told apart by a grayscale gradient (darker = higher
-   multiplier) rather than hue, to stay monochrome. */
+/* Singles are plain white; doubles and trebles pick up the mint / coral
+   accents so the three rings read apart at a glance. */
 .dart-cell-single {
-  background-color: var(--color-cream);
-  color: var(--color-forest-deep);
+  background-color: #FFFFFF;
+  color: var(--color-slate);
   font-size: 1rem;
 }
 .dart-cell-single:hover {
-  background-color: var(--color-panel);
-  border-color: var(--color-forest);
+  background-color: #FAFAFB;
 }
 
 .dart-cell-double {
-  background-color: #E4E4E6;
-  color: var(--color-forest);
+  background-color: var(--color-mint-tint);
+  color: var(--color-mint-ink);
   font-size: 0.9rem;
 }
 .dart-cell-double:hover {
-  background-color: #D6D6D9;
-  border-color: rgba(0, 0, 0, 0.3);
+  background-color: #D4F0E2;
 }
 
 .dart-cell-treble {
-  background-color: #CBCBCF;
-  color: var(--color-gold-deep);
+  background-color: var(--color-coral-tint);
+  color: var(--color-coral-ink);
   font-size: 0.9rem;
 }
 .dart-cell-treble:hover {
-  background-color: #BCBCC1;
-  border-color: rgba(0, 0, 0, 0.4);
+  background-color: #FBE1D0;
 }
 
 .dart-cell-special {
-  background-color: var(--color-panel);
-  color: var(--color-muted);
+  background-color: var(--color-track);
+  color: var(--color-slate-soft);
   font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
+  box-shadow: none;
 }
 
 .dart-cell-bull {
-  background: var(--color-forest);
+  background: var(--color-charcoal);
   color: white;
 }
 .dart-cell-bullseye {
-  background: #A63B37;
+  background: #D6453D;
   color: white;
 }
 
@@ -323,8 +341,8 @@ body {
 }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-cream); }
-::-webkit-scrollbar-thumb { background: var(--color-muted); border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--color-canvas); }
+::-webkit-scrollbar-thumb { background: var(--color-subtle); border-radius: 3px; }
 
 /* Utility to hide scrollbar but keep functionality */
 .scrollbar-hide {
@@ -333,4 +351,97 @@ body {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ─────────────────────────────────────────────
+   Soft UI — layered cards used by Home + Match Setup
+   Outer "shell" (light gray) holds inner white "cards".
+───────────────────────────────────────────── */
+.soft-shell {
+  background: var(--color-shell);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 32px;
+  box-shadow:
+    0 1px 2px rgba(20, 24, 32, 0.04),
+    0 24px 48px -28px rgba(20, 24, 32, 0.18);
+}
+
+.soft-card {
+  background: #FFFFFF;
+  border-radius: 24px;
+  box-shadow:
+    0 1px 2px rgba(20, 24, 32, 0.04),
+    0 10px 28px -16px rgba(20, 24, 32, 0.14);
+}
+
+.soft-float {
+  background: #FFFFFF;
+  box-shadow:
+    0 1px 2px rgba(20, 24, 32, 0.06),
+    0 8px 20px -8px rgba(20, 24, 32, 0.18);
+}
+
+.soft-press {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 160ms ease;
+}
+.soft-press:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+.soft-primary {
+  background: var(--color-charcoal);
+  color: #FFFFFF;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 10px 24px -10px rgba(20, 24, 32, 0.55);
+}
+.soft-primary:disabled {
+  background: #C9CBD0;
+  box-shadow: none;
+}
+
+/* Diagonal hatching laid over colored progress bars / empty tracks */
+.soft-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.28) 0 2px,
+    transparent 2px 6px
+  );
+}
+.soft-hatch-empty {
+  background-color: #EFEFF1;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(20, 24, 32, 0.07) 0 1.5px,
+    transparent 1.5px 6px
+  );
+}
+
+.tracking-display {
+  letter-spacing: -0.022em;
+}
+
+/* Bottom sheet enter/exit — same path both ways */
+@keyframes softScrimIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes softScrimOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes softSheetIn  { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes softSheetOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
+
+.soft-scrim      { animation: softScrimIn 280ms ease-out both; }
+.soft-scrim-out  { animation: softScrimOut 220ms ease-in both; }
+.soft-sheet      { animation: softSheetIn 420ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.soft-sheet-out  { animation: softSheetOut 240ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+
+@keyframes softRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.soft-rise { animation: softRise 520ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .soft-sheet, .soft-sheet-out, .soft-rise { animation: softScrimIn 200ms ease both; }
+  .soft-sheet-out { animation-name: softScrimOut; }
+  .soft-press:active { transform: none; }
 }

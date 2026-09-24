@@ -188,7 +188,7 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
         {/* Magnifying Glass Overlay via Portal */}
         {isDragging && createPortal(
           <div 
-            className="fixed pointer-events-none bg-cream rounded-full overflow-hidden shadow-[0_8px_32px_rgba(0, 0, 0, 0.3)] border-[3px] border-gold"
+            className="fixed pointer-events-none bg-canvas rounded-full overflow-hidden shadow-[0_12px_32px_rgba(20,24,32,0.3)] border-[3px] border-white"
             style={{
               zIndex: 99999,
               width: MAG_SIZE,
@@ -224,7 +224,7 @@ export function DartboardSVG({ onDartThrown, thrownDarts = [], disabled = false,
             {/* Target Label */}
             {hoveredDart && (
               <div className="absolute bottom-2 left-0 right-0 flex justify-center">
-                <div className="bg-forest px-2 py-0.5 rounded-md text-[10px] font-bold font-sans text-white shadow-sm border border-forest-deep">
+                <div className="bg-charcoal px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-white shadow-sm tabular-nums">
                   {throwLabel(hoveredDart)}
                 </div>
               </div>

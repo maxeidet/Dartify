@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { X } from 'lucide-react';
+import { Crosshair, X } from 'lucide-react';
 import type { GameSummary } from '../../store/historyStore';
 import type { DartThrow } from '../../core/types';
 import { throwLabel } from '../../core/types';
 import { DartboardContent } from '../scoring/DartboardSVG';
 import { getMarkerPosition } from '../scoring/dartboardMath';
+import { Segmented } from '../shared/SoftUI';
 
 interface PlayerStatsModalProps {
   game: GameSummary;
@@ -17,6 +18,7 @@ type Tab = 'heatmap' | 'landings';
 export function PlayerStatsModal({ game, initialPlayerId, onClose }: PlayerStatsModalProps) {
   const [activePlayerId, setActivePlayerId] = useState(initialPlayerId);
   const [activeTab, setActiveTab] = useState<Tab>('heatmap');
+  const [closing, setClosing] = useState(false);
 
   // Extract all throws for the active player
   const allThrows = useMemo(() => {
@@ -44,145 +46,159 @@ export function PlayerStatsModal({ game, initialPlayerId, onClose }: PlayerStats
     return Object.entries(stats).sort((a, b) => b[1] - a[1]);
   }, [allThrows]);
 
+  const activePlayer = game.players.find(p => p.participantId === activePlayerId);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-panel border border-line rounded-t-[28px] sm:rounded-[28px] p-5 w-full max-w-md shadow-2xl flex flex-col h-[85vh] sm:h-[80vh] slide-in-from-bottom-8 sm:slide-in-from-bottom-0">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+      <div
+        className={`absolute inset-0 bg-[rgba(20,24,32,0.32)] backdrop-blur-[6px] ${closing ? 'soft-scrim-out' : 'soft-scrim'}`}
+        onClick={() => setClosing(true)}
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Player stats"
+        onAnimationEnd={(e) => { if (closing && e.target === e.currentTarget) onClose(); }}
+        className={`relative w-full max-w-md mx-auto h-[90dvh] flex flex-col bg-shell rounded-t-[32px] shadow-[0_-12px_40px_rgba(20,24,32,0.18)] ${closing ? 'soft-sheet-out' : 'soft-sheet'}`}
+      >
+        {/* Grabber */}
+        <div className="flex justify-center pt-2.5">
+          <span className="w-9 h-[5px] rounded-full bg-[#D5D6DA]" />
+        </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-8" /> {/* Spacer */}
-          <h2 className="font-display font-black text-xl text-forest-deep">Player Stats</h2>
+        <div className="px-6 pt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-slate-soft">
+            <Crosshair size={20} strokeWidth={2.2} />
+            <h2 className="text-[21px] font-semibold tracking-display leading-none">Player stats</h2>
+          </div>
           <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-cream flex items-center justify-center text-muted hover:bg-line transition-colors"
+            onClick={() => setClosing(true)}
+            aria-label="Close"
+            className="w-9 h-9 rounded-full soft-float soft-press flex items-center justify-center text-slate-soft"
           >
-            <X size={18} strokeWidth={2.5} />
+            <X size={18} strokeWidth={2.4} />
           </button>
         </div>
 
-        {/* Player Selector (if multiplayer) */}
-        {game.players.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
-            {game.players.map(p => (
-              <button
-                key={p.participantId}
-                onClick={() => setActivePlayerId(p.participantId)}
-                className={`
-                  shrink-0 px-3.5 py-1.5 rounded-full border font-sans font-bold text-[10px] tracking-[1px] transition-all flex items-center gap-1.5
-                  ${activePlayerId === p.participantId
-                    ? 'bg-forest border-forest text-white'
-                    : 'bg-cream border-line text-muted hover:border-gold'}
-                `}
-              >
-                <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] ${activePlayerId === p.participantId ? 'bg-white text-forest' : 'bg-line text-muted'}`}>
-                  {p.displayName.charAt(0).toUpperCase()}
-                </div>
-                {p.displayName}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="px-6 pt-5 pb-4">
+          <p className="text-[28px] leading-[1.15] font-semibold tracking-display text-slate truncate">
+            {activePlayer?.displayName ?? 'Player'}
+          </p>
+          <p className="mt-1.5 text-[15px] text-subtle font-medium tabular-nums">
+            {allThrows.length} {allThrows.length === 1 ? 'dart' : 'darts'} this game
+          </p>
+        </div>
 
-        {/* Tabs */}
-        <div className="flex p-1 bg-cream rounded-[14px] border border-line mb-4 shrink-0">
-          <button
-            onClick={() => setActiveTab('heatmap')}
-            className={`
-              flex-1 py-2 rounded-[10px] text-[11px] font-sans font-bold tracking-[1.5px] uppercase transition-all duration-200
-              ${activeTab === 'heatmap' ? 'bg-forest text-white shadow-md' : 'text-muted hover:text-forest-deep'}
-            `}
-          >
-            Heat Map
-          </button>
-          <button
-            onClick={() => setActiveTab('landings')}
-            className={`
-              flex-1 py-2 rounded-[10px] text-[11px] font-sans font-bold tracking-[1.5px] uppercase transition-all duration-200
-              ${activeTab === 'landings' ? 'bg-forest text-white shadow-md' : 'text-muted hover:text-forest-deep'}
-            `}
-          >
-            Landings
-          </button>
+        <div className="px-4 flex flex-col gap-2 shrink-0">
+          {/* Player selector (if multiplayer) */}
+          {game.players.length > 1 && (
+            <Segmented
+              ariaLabel="Player"
+              value={activePlayerId}
+              onChange={setActivePlayerId}
+              options={game.players.map(p => ({ value: p.participantId, label: <span className="block truncate px-2">{p.displayName}</span> }))}
+            />
+          )}
+
+          <Segmented
+            ariaLabel="View"
+            value={activeTab}
+            onChange={setActiveTab}
+            options={[
+              { value: 'heatmap', label: 'Heat map' },
+              { value: 'landings', label: 'Landings' },
+            ]}
+          />
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide flex flex-col items-center">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] flex flex-col gap-3">
 
-          <div className="relative w-full aspect-square max-w-[320px] mb-4 shrink-0">
-            {/* Base Dartboard SVG */}
-            <svg
-              width="100%"
-              height="100%"
-              viewBox={`0 0 320 320`}
-              className={`drop-shadow-[0_4px_16px_rgba(0, 0, 0, 0.1)] rounded-full bg-cream transition-opacity duration-300 ${activeTab === 'heatmap' ? 'opacity-70' : 'opacity-100'}`}
-            >
-              <DartboardContent size={320} cx={160} cy={160} scale={160} />
+          <div className="soft-card p-4 flex flex-col items-center">
+            <div className="relative w-full aspect-square max-w-[320px] shrink-0">
+              {/* Base Dartboard SVG */}
+              <svg
+                width="100%"
+                height="100%"
+                viewBox={`0 0 320 320`}
+                className={`rounded-full transition-opacity duration-300 ${activeTab === 'heatmap' ? 'opacity-70' : 'opacity-100'}`}
+              >
+                <DartboardContent size={320} cx={160} cy={160} scale={160} />
 
-              {/* Landings Markers */}
-              {activeTab === 'landings' && (
-                <g className="pointer-events-none">
-                  {allThrows.map((dart, index) => {
-                    const pos = getMarkerPosition(dart, index, 160, 160, 160, 320);
-                    if (!pos) return null;
+                {/* Landings Markers */}
+                {activeTab === 'landings' && (
+                  <g className="pointer-events-none">
+                    {allThrows.map((dart, index) => {
+                      const pos = getMarkerPosition(dart, index, 160, 160, 160, 320);
+                      if (!pos) return null;
 
-                    const markerFill =
-                      dart.segment === 25
-                        ? dart.multiplier === 2 ? '#9E2A2B' : '#1A5833'
-                        : dart.multiplier === 3 ? '#F5E2A0'
-                          : dart.multiplier === 2 ? '#E5DFCD' : '#BFA464';
+                      const markerFill =
+                        dart.segment === 25
+                          ? dart.multiplier === 2 ? '#9E2A2B' : '#1A5833'
+                          : dart.multiplier === 3 ? '#F5E2A0'
+                            : dart.multiplier === 2 ? '#E5DFCD' : '#BFA464';
 
-                    const markerStroke = dart.multiplier === 3 ? '#1A5833' : '#2E332E';
-                    const markerRadius = dart.segment === 25 ? (dart.multiplier === 2 ? 320 * 0.015 : 320 * 0.012) : 320 * 0.01;
+                      const markerStroke = dart.multiplier === 3 ? '#1A5833' : '#2E332E';
+                      const markerRadius = dart.segment === 25 ? (dart.multiplier === 2 ? 320 * 0.015 : 320 * 0.012) : 320 * 0.01;
 
-                    return (
-                      <g key={`landing-${index}`}>
-                        <circle
-                          cx={pos.x}
-                          cy={pos.y}
-                          r={markerRadius}
-                          fill={markerFill}
-                          stroke={markerStroke}
-                          strokeWidth={1.5}
-                          opacity="0.9"
-                        />
-                      </g>
-                    );
-                  })}
-                </g>
+                      return (
+                        <g key={`landing-${index}`}>
+                          <circle
+                            cx={pos.x}
+                            cy={pos.y}
+                            r={markerRadius}
+                            fill={markerFill}
+                            stroke={markerStroke}
+                            strokeWidth={1.5}
+                            opacity="0.9"
+                          />
+                        </g>
+                      );
+                    })}
+                  </g>
+                )}
+              </svg>
+
+              {/* Heatmap Canvas Overlay */}
+              {activeTab === 'heatmap' && (
+                <HeatmapCanvas throws={throwsWithPoints} size={320} />
               )}
-            </svg>
+            </div>
 
-            {/* Heatmap Canvas Overlay */}
             {activeTab === 'heatmap' && (
-              <HeatmapCanvas throws={throwsWithPoints} size={320} />
+              <div className="mt-3 text-center">
+                <p className="text-[13px] text-subtle font-medium">
+                  Based on {throwsWithPoints.length} throws with coordinates
+                </p>
+                {allThrows.length > throwsWithPoints.length && (
+                  <p className="mt-0.5 text-[12px] text-subtle/80">
+                    {allThrows.length - throwsWithPoints.length} quick-tap throws have no position
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Additional info based on tab */}
-          {activeTab === 'heatmap' ? (
-            <div className="text-center px-4 w-full">
-              <p className="text-xs text-muted font-medium mb-1">
-                Based on {throwsWithPoints.length} throws with coordinates.
-              </p>
-              {allThrows.length > throwsWithPoints.length && (
-                <p className="text-[10px] text-gold-deep/80">
-                  ({allThrows.length - throwsWithPoints.length} quick-tap throws hidden)
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="w-full px-1">
-              <h3 className="font-sans font-bold text-xs tracking-wider uppercase text-muted mb-3 border-b border-line pb-1">
-                Hit Breakdown ({allThrows.length} total)
-              </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {hitStats.map(([label, count]) => (
-                  <div key={label} className="bg-cream border border-line rounded-lg p-2 flex flex-col items-center justify-center">
-                    <span className="font-display font-bold text-forest-deep text-base leading-none mb-1">{label}</span>
-                    <span className="text-[10px] text-muted font-medium uppercase tracking-wide">{count} {count === 1 ? 'hit' : 'hits'}</span>
-                  </div>
-                ))}
+          {activeTab === 'landings' && (
+            <div className="soft-card p-5">
+              <div className="flex items-center justify-between">
+                <span className="text-[17px] font-semibold text-slate">Hit breakdown</span>
+                <span className="text-[15px] font-medium text-subtle tabular-nums">{allThrows.length} total</span>
               </div>
+              {hitStats.length === 0 ? (
+                <p className="mt-3 text-[14px] text-subtle">No darts recorded.</p>
+              ) : (
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {hitStats.map(([label, count]) => (
+                    <div key={label} className="rounded-2xl bg-track/70 py-3 flex flex-col items-center justify-center">
+                      <span className="text-[17px] font-semibold text-slate leading-none tabular-nums">{label}</span>
+                      <span className="mt-1.5 text-[12px] text-subtle font-medium tabular-nums">{count} {count === 1 ? 'hit' : 'hits'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
