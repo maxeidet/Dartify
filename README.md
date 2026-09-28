@@ -2,8 +2,11 @@
 
 A darts scoreboard for the phone. Pick a game, add your players and score every dart by tapping the board.
 
-<!-- Drop bdc-ad.mp4 here in the GitHub editor; it becomes a user-attachments link. -->
-VIDEO_URL_HERE
+
+
+https://github.com/user-attachments/assets/a0808669-7592-4697-b508-24cd1a06fd85
+
+
 
 ## Features
 
