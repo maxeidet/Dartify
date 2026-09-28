@@ -1,32 +1,34 @@
-# React + TypeScript + Vite
+# Dartify
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A darts scoreboard for the phone. Pick a game, add your players and score every dart by tapping the board.
 
-Currently, two official plugins are available:
+<!-- Drop bdc-ad.mp4 here in the GitHub editor; it becomes a user-attachments link. -->
+VIDEO_URL_HERE
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **X01** (301 / 501 / 701) with double in and double out
+- **Around the Clock** and **Round the World** practice modes
+- Score on a real dartboard with a magnifier, or with a quick-tap grid
+- Round history, averages and per-player stats
+- Local players plus accounts synced with Supabase
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Getting started
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Create a `.env` file with your Supabase project:
+
+```
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
+
+The database schema is in [`supabase/schema.sql`](supabase/schema.sql).
+
+## Built with
+
+React, TypeScript, Vite, Tailwind CSS, Zustand and Supabase.
