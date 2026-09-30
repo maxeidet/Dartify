@@ -165,6 +165,8 @@ export interface GameModeEngine<TConfig extends GameConfig = GameConfig> {
 // ─────────────────────────────────────────────
 
 export type ParticipantType = 'online' | 'local';
+export type LobbyStatus = 'waiting' | 'in_progress';
+export type LobbyParticipantStatus = 'invited' | 'joined' | 'declined';
 
 export interface Participant {
   id: string;

@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChartColumn, ChartPie, ChevronRight, Clock3, Flame, Globe, Plus, Target, Trophy, Users } from 'lucide-react';
+import { ChartColumn, ChartPie, ChevronRight, Clock3, Flame, Globe, Plus, Target, Trophy, UserPlus, Users } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import { useHistoryStore, computeX01Avg, computeHighOut, computeBestLeg } from '../store/historyStore';
 import { useAuthStore } from '../store/authStore';
+import { useLobbyStore } from '../store/lobbyStore';
+import { isOnlineModeAvailable } from '../lib/supabase';
 import bdcLogo from '../assets/bdc-logo-transparent.png';
 import type { SelectedPlayer } from '../components/shared/PlayerSelector';
 import { MatchSetupSheet } from '../components/shared/MatchSetupSheet';
@@ -30,6 +32,26 @@ export function HomePage() {
   const { gameState } = useGameStore();
   const { gameHistory } = useHistoryStore();
   const { profile } = useAuthStore();
+  const { myInvites, fetchMyInvites, subscribeToMyInvites, unsubscribeFromMyInvites, createLobby, respondToInvite } = useLobbyStore();
+  const [lobbyError, setLobbyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOnlineModeAvailable) return;
+    fetchMyInvites();
+    subscribeToMyInvites();
+    return () => unsubscribeFromMyInvites();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleOpenLobby = async () => {
+    setLobbyError(null);
+    const id = await createLobby();
+    if (id) {
+      navigate(`/lobby/${id}`);
+    } else {
+      setLobbyError(useLobbyStore.getState().error ?? 'Could not create lobby');
+    }
+  };
 
   // Computed stats
   const x01Avg = computeX01Avg(gameHistory);
@@ -80,6 +102,39 @@ export function HomePage() {
             )}
           </button>
         </header>
+
+        {/* Lobby invites */}
+        {myInvites.length > 0 && (
+          <section className="soft-shell p-2 soft-rise" style={rise(1)}>
+            <div className="px-4 pt-4 pb-3">
+              <ShellTitle icon={UserPlus}>Lobby invites</ShellTitle>
+            </div>
+            <ul className="soft-card px-4 divide-y divide-line/70">
+              {myInvites.map((invite) => (
+                <li key={invite.participantId} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-[16px] font-medium text-slate">{invite.lobbyName}</p>
+                    <p className="text-[13px] text-subtle">from {invite.hostName}</p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={() => respondToInvite(invite.participantId, false)}
+                      className="h-9 px-3.5 rounded-full soft-float soft-press text-[14px] font-semibold text-slate-soft"
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={async () => { await respondToInvite(invite.participantId, true); navigate(`/lobby/${invite.lobbyId}`); }}
+                      className="h-9 px-3.5 rounded-full soft-primary soft-press text-[14px] font-semibold"
+                    >
+                      Join
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Resume — ticket-style card for the game in progress */}
         {ongoing && (
@@ -189,7 +244,8 @@ export function HomePage() {
               accent="coral"
               title="Lobby"
               subtitle="Play with friends online"
-              badge={<Badge accent="coral">Soon</Badge>}
+              badge={<Badge accent="coral">Online</Badge>}
+              onClick={isOnlineModeAvailable ? handleOpenLobby : undefined}
             />
             <ModeRow
               icon={<CricketIcon />}
@@ -199,6 +255,10 @@ export function HomePage() {
               badge={<Badge accent="coral">Soon</Badge>}
             />
           </div>
+
+          {lobbyError && (
+            <p className="mt-2 mx-1 text-[13px] font-medium text-[#C4413A]">{lobbyError}</p>
+          )}
 
           <div className="flex items-center gap-3 pt-3 px-1 pb-1">
             <button

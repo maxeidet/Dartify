@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { DartThrow } from '../../core/types';
 import { throwLabel } from '../../core/types';
-import dartboardImg from '../../assets/dartboard-board.webp';
+import dartboardImg from '../../assets/bjursbl.webp';
 
 import {
   getHitTarget,

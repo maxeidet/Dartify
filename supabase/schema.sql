@@ -207,6 +207,136 @@ CREATE INDEX IF NOT EXISTS idx_throws_round ON throws(match_id, round_number);
 -- 8. REALTIME (enable for online multiplayer)
 -- ─────────────────────────────────────────────
 -- Run these in Supabase Dashboard → Database → Replication
--- or via the API:
--- ALTER PUBLICATION supabase_realtime ADD TABLE throws;
+-- or via the API. Lobbies + lobby_participants + matches are REQUIRED for
+-- online lobbies (invites, live game-mode picks, live match sync) to work.
+-- ALTER PUBLICATION supabase_realtime ADD TABLE lobbies;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE lobby_participants;
 -- ALTER PUBLICATION supabase_realtime ADD TABLE matches;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE throws;
+
+-- ============================================================
+-- 9. FRIENDS
+-- (Already exists in production — added here so schema.sql matches reality.
+--  Safe to re-run: every statement below is idempotent.)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS friends (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  requester_id  UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  addressee_id  UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted')),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT no_self_friend CHECK (requester_id <> addressee_id),
+  CONSTRAINT unique_friend_pair UNIQUE (requester_id, addressee_id)
+);
+
+ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "friends: participant read" ON friends;
+CREATE POLICY "friends: participant read"
+  ON friends FOR SELECT TO authenticated USING (
+    auth.uid() = requester_id OR auth.uid() = addressee_id
+  );
+
+DROP POLICY IF EXISTS "friends: requester insert" ON friends;
+CREATE POLICY "friends: requester insert"
+  ON friends FOR INSERT WITH CHECK (auth.uid() = requester_id);
+
+DROP POLICY IF EXISTS "friends: addressee accept" ON friends;
+CREATE POLICY "friends: addressee accept"
+  ON friends FOR UPDATE USING (auth.uid() = addressee_id);
+
+DROP POLICY IF EXISTS "friends: participant delete" ON friends;
+CREATE POLICY "friends: participant delete"
+  ON friends FOR DELETE USING (auth.uid() = requester_id OR auth.uid() = addressee_id);
+
+CREATE INDEX IF NOT EXISTS idx_friends_requester ON friends(requester_id);
+CREATE INDEX IF NOT EXISTS idx_friends_addressee ON friends(addressee_id);
+
+-- ============================================================
+-- 10. ONLINE LOBBIES — invites, leader-controlled game mode, live match sync
+-- Safe to re-run: every statement below is idempotent.
+-- ============================================================
+
+-- Lobby-level status + the game config the leader is configuring live,
+-- read by every invited member before the match starts.
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_progress'));
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS game_mode TEXT NOT NULL DEFAULT 'x01';
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS game_config JSONB NOT NULL DEFAULT '{"mode":"x01","startingScore":501,"doubleOut":true,"doubleIn":false,"legs":1}';
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS active_match_id UUID REFERENCES matches(id);
+
+-- Invite / join status per participant row
+ALTER TABLE lobby_participants ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'invited' CHECK (status IN ('invited', 'joined', 'declined'));
+
+-- An invited player accepts/declines their own invite (host already has full write access via "host write")
+DROP POLICY IF EXISTS "lobby_participants: self respond to invite" ON lobby_participants;
+CREATE POLICY "lobby_participants: self respond to invite"
+  ON lobby_participants FOR UPDATE USING (profile_id = auth.uid())
+  WITH CHECK (profile_id = auth.uid());
+
+-- A player can remove themselves from a lobby without needing the host
+DROP POLICY IF EXISTS "lobby_participants: self leave" ON lobby_participants;
+CREATE POLICY "lobby_participants: self leave"
+  ON lobby_participants FOR DELETE USING (profile_id = auth.uid());
+
+-- Live authoritative game state, mirrored to every device in the lobby
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS state JSONB;
+
+-- Whoever's turn it is writes the next state (not just the host)
+DROP POLICY IF EXISTS "matches: participant write" ON matches;
+CREATE POLICY "matches: participant write"
+  ON matches FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM lobby_participants lp
+      WHERE lp.lobby_id = matches.lobby_id AND lp.profile_id = auth.uid() AND lp.status = 'joined'
+    )
+  );
+
+-- Tighten the original "any signed-in user can read any lobby" policies down
+-- to actual lobby members now that lobbies carry live config + match state.
+DROP POLICY IF EXISTS "lobbies: authenticated read" ON lobbies;
+CREATE POLICY "lobbies: member read"
+  ON lobbies FOR SELECT TO authenticated USING (
+    auth.uid() = host_id
+    OR EXISTS (SELECT 1 FROM lobby_participants lp WHERE lp.lobby_id = lobbies.id AND lp.profile_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "lobby_participants: lobby member read" ON lobby_participants;
+CREATE POLICY "lobby_participants: lobby member read"
+  ON lobby_participants FOR SELECT TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM lobbies l
+      WHERE l.id = lobby_participants.lobby_id AND (
+        l.host_id = auth.uid()
+        OR EXISTS (SELECT 1 FROM lobby_participants me WHERE me.lobby_id = l.id AND me.profile_id = auth.uid())
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "matches: lobby member read" ON matches;
+CREATE POLICY "matches: lobby member read"
+  ON matches FOR SELECT TO authenticated USING (
+    EXISTS (SELECT 1 FROM lobbies l WHERE l.id = matches.lobby_id AND l.host_id = auth.uid())
+    OR EXISTS (SELECT 1 FROM lobby_participants lp WHERE lp.lobby_id = matches.lobby_id AND lp.profile_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "throws: lobby member read" ON throws;
+CREATE POLICY "throws: lobby member read"
+  ON throws FOR SELECT TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM matches m
+      JOIN lobby_participants lp ON lp.lobby_id = m.lobby_id
+      WHERE m.id = throws.match_id AND lp.profile_id = auth.uid()
+    )
+  );
+
+-- Let lobby members see the display name of a local player another member added
+-- (local_players otherwise stays owner-only via "local_players: owner all")
+DROP POLICY IF EXISTS "local_players: lobby member read" ON local_players;
+CREATE POLICY "local_players: lobby member read"
+  ON local_players FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM lobby_participants lp
+      WHERE lp.local_player_id = local_players.id
+        AND EXISTS (SELECT 1 FROM lobby_participants me WHERE me.lobby_id = lp.lobby_id AND me.profile_id = auth.uid())
+    )
+  );

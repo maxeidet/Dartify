@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { House, LogOut, RotateCcw, ScrollText, Target, Trophy, X } from 'lucide-react';
+import { House, LogOut, RotateCcw, ScrollText, Target, Trophy, Users, X } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import { ScoringView } from '../components/scoring/ScoringView';
 import { ScoreDisplay } from '../components/game/ScoreDisplay';
@@ -22,6 +22,9 @@ export function GamePage() {
     nextRound,
     resetGame,
     setScoringMode,
+    isOnlineMatch,
+    myControlledParticipantIds,
+    lobbyId,
   } = useGameStore();
 
   const [showHistory, setShowHistory] = useState(false);
@@ -82,6 +85,7 @@ export function GamePage() {
   const checkoutHint = engine.getCheckoutHint?.(gameState) ?? null;
   const canUndo = gameState.currentDartsInRound.length > 0 || gameState.roundHistory.length > 0;
   const startingScore = 'startingScore' in gameState.config ? gameState.config.startingScore : undefined;
+  const isMyTurn = !isOnlineMatch || myControlledParticipantIds.includes(currentPlayer.participantId);
 
   const handleDartThrown = (dart: DartThrow) => {
     throwDart(dart);
@@ -140,28 +144,38 @@ export function GamePage() {
               <House size={18} strokeWidth={2.3} />
               Home
             </button>
-            <button
-              onClick={() => {
-                setWinnerVisible(false);
-                setScoringMode('grid');
-                // Rematch with the same players and rules.
-                const store = useGameStore.getState();
-                store.startLocalGame(
-                  gameState.players.map((p, index) => ({
-                    id: p.participantId,
-                    type: 'local' as const,
-                    displayName: p.displayName,
-                    avatarUrl: p.avatarUrl,
-                    displayOrder: index,
-                  })),
-                  gameState.config as any,
-                );
-              }}
-              className="flex-1 h-[56px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold"
-            >
-              <RotateCcw size={18} strokeWidth={2.3} />
-              Rematch
-            </button>
+            {isOnlineMatch ? (
+              <button
+                onClick={() => { setWinnerVisible(false); setScoringMode('grid'); const lobby = lobbyId; resetGame(); navigate(lobby ? `/lobby/${lobby}` : '/'); }}
+                className="flex-1 h-[56px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold"
+              >
+                <Users size={18} strokeWidth={2.3} />
+                Back to lobby
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setWinnerVisible(false);
+                  setScoringMode('grid');
+                  // Rematch with the same players and rules.
+                  const store = useGameStore.getState();
+                  store.startLocalGame(
+                    gameState.players.map((p, index) => ({
+                      id: p.participantId,
+                      type: 'local' as const,
+                      displayName: p.displayName,
+                      avatarUrl: p.avatarUrl,
+                      displayOrder: index,
+                    })),
+                    gameState.config as any,
+                  );
+                }}
+                className="flex-1 h-[56px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold"
+              >
+                <RotateCcw size={18} strokeWidth={2.3} />
+                Rematch
+              </button>
+            )}
           </div>
         </section>
       </div>
@@ -233,17 +247,27 @@ export function GamePage() {
 
       {/* ── Round total row ── */}
       <div className="flex items-center justify-center px-3 py-0.5 z-10 relative">
-        <div
-          className={`text-[12px] text-subtle font-medium tabular-nums ${
-            gameState.currentDartsInRound.length > 0 ? '' : 'invisible'
-          }`}
-        >
-          {gameState.currentDartsInRound.reduce((sum, d) => {
-            const v = d.segment === 0 ? 0 : d.segment === 25 ? (d.multiplier === 2 ? 50 : 25) : d.segment * d.multiplier;
-            return sum + v;
-          }, 0)}{' '}
-          this round
-        </div>
+        {isOnlineMatch && !isMyTurn ? (
+          <div className="flex items-center gap-1.5 text-[13px] font-semibold text-subtle">
+            <span className="relative flex w-1.5 h-1.5">
+              <span className="absolute inset-0 rounded-full bg-azure animate-ping opacity-60" />
+              <span className="relative w-1.5 h-1.5 rounded-full bg-azure-ink" />
+            </span>
+            Waiting for {currentPlayer.displayName} to throw…
+          </div>
+        ) : (
+          <div
+            className={`text-[12px] text-subtle font-medium tabular-nums ${
+              gameState.currentDartsInRound.length > 0 ? '' : 'invisible'
+            }`}
+          >
+            {gameState.currentDartsInRound.reduce((sum, d) => {
+              const v = d.segment === 0 ? 0 : d.segment === 25 ? (d.multiplier === 2 ? 50 : 25) : d.segment * d.multiplier;
+              return sum + v;
+            }, 0)}{' '}
+            this round
+          </div>
+        )}
       </div>
 
       {/* ── Scoring Grid / Dartboard ── */}
@@ -256,8 +280,8 @@ export function GamePage() {
           onNextRound={nextRound}
           dartsInRound={gameState.currentDartsInRound}
           thrownDarts={gameState.currentDartsInRound}
-          canUndo={canUndo}
-            disabled={gameState.status === 'finished' || gameState.isCurrentRoundBust || gameState.currentDartsInRound.length >= 3}
+          canUndo={canUndo && isMyTurn}
+            disabled={gameState.status === 'finished' || gameState.isCurrentRoundBust || gameState.currentDartsInRound.length >= 3 || (isOnlineMatch && !isMyTurn)}
             gameMode={gameState.gameMode}
             currentTarget={currentPlayer.score.currentTarget as DartThrow['segment'] | undefined}
             isBust={gameState.gameMode === 'x01' && gameState.isCurrentRoundBust}
@@ -339,7 +363,11 @@ export function GamePage() {
         <ConfirmDialog
           icon={LogOut}
           title="Exit this game?"
-          message="Your current match will be discarded and you'll return home."
+          message={
+            isOnlineMatch
+              ? "You'll stop seeing live updates, but the match continues for the other players."
+              : "Your current match will be discarded and you'll return home."
+          }
           cancelLabel="Keep playing"
           confirmLabel="Exit game"
           destructive

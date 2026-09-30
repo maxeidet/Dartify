@@ -5,6 +5,7 @@ import { GamePage } from './pages/GamePage';
 import { AuthPage } from './pages/AuthPage';
 import { StatsPage } from './pages/StatsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { LobbyPage } from './pages/LobbyPage';
 import { useAuthStore } from './store/authStore';
 import './index.css';
 
@@ -54,6 +55,14 @@ export default function App() {
                 <GamePage />
               </ProtectedRoute>
             } 
+          />
+          <Route
+            path="/lobby/:id"
+            element={
+              <ProtectedRoute>
+                <LobbyPage />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/stats"

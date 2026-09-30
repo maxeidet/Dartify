@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { GameState, DartThrow, GameConfig, Participant } from '../core/types';
 import { getEngine } from '../core/gameModeRegistry';
 import { createX01Game } from '../core/x01Engine';
@@ -14,6 +15,8 @@ import type { X01Config, AroundTheClockConfig, RoundTheWorldConfig } from '../co
 import { supabase, isOnlineModeAvailable } from '../lib/supabase';
 import { useHistoryStore } from './historyStore';
 import type { GameSummary } from './historyStore';
+
+let onlineMatchChannel: RealtimeChannel | null = null;
 
 // ─────────────────────────────────────────────
 // Store Interface
@@ -31,9 +34,20 @@ interface GameStore {
   // Online match context (null for local games)
   matchId: string | null;
   isOnlineMatch: boolean;
+  lobbyId: string | null;
+  /** Lobby-participant ids this device is allowed to throw for (self + any local players the host added) */
+  myControlledParticipantIds: string[];
 
   // Actions
   startLocalGame: (participants: Participant[], config: GameConfig) => void;
+  startOnlineGame: (
+    matchId: string,
+    lobbyId: string,
+    myControlledParticipantIds: string[],
+    gameState: GameState,
+  ) => void;
+  subscribeOnlineMatch: (matchId: string) => void;
+  unsubscribeOnlineMatch: () => void;
   throwDart: (dart: DartThrow) => void;
   undoLastDart: () => void;
   nextRound: () => void;
@@ -69,15 +83,18 @@ async function syncThrowToSupabase(
   });
 }
 
-async function syncMatchFinishedToSupabase(
-  matchId: string,
-  winnerId: string,
-): Promise<void> {
+/** Pushes the whole authoritative game state so every device in the lobby mirrors it live. */
+async function syncMatchStateToSupabase(matchId: string, state: GameState): Promise<void> {
   if (!isOnlineModeAvailable) return;
 
   await supabase
     .from('matches')
-    .update({ status: 'finished', winner_id: winnerId, finished_at: new Date().toISOString() })
+    .update({
+      state,
+      status: state.status === 'finished' ? 'finished' : 'ongoing',
+      winner_id: state.winnerId ?? null,
+      finished_at: state.status === 'finished' ? new Date().toISOString() : null,
+    })
     .eq('id', matchId);
 }
 
@@ -111,6 +128,8 @@ export const useGameStore = create<GameStore>()(
       scoringMode: 'grid',
       matchId: null,
       isOnlineMatch: false,
+      lobbyId: null,
+      myControlledParticipantIds: [],
 
       startLocalGame: (participants, config) => {
         const matchId = typeof crypto !== 'undefined' && crypto.randomUUID
@@ -128,17 +147,54 @@ export const useGameStore = create<GameStore>()(
           throw new Error(`Unsupported game mode: ${config.mode}`);
         }
 
-        set({ gameState, matchId, isOnlineMatch: false });
+        get().unsubscribeOnlineMatch();
+        set({ gameState, matchId, isOnlineMatch: false, lobbyId: null, myControlledParticipantIds: [] });
+      },
+
+      startOnlineGame: (matchId, lobbyId, myControlledParticipantIds, gameState) => {
+        get().unsubscribeOnlineMatch();
+        set({ gameState, matchId, isOnlineMatch: true, lobbyId, myControlledParticipantIds });
+        get().subscribeOnlineMatch(matchId);
+      },
+
+      subscribeOnlineMatch: (matchId) => {
+        if (!isOnlineModeAvailable) return;
+        if (onlineMatchChannel) supabase.removeChannel(onlineMatchChannel);
+
+        onlineMatchChannel = supabase
+          .channel(`match-${matchId}`)
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${matchId}` },
+            (payload) => {
+              const newState = (payload.new as { state?: GameState }).state;
+              if (newState) {
+                set({ gameState: newState });
+                if (newState.status === 'finished') recordFinishedGame(newState);
+              }
+            },
+          )
+          .subscribe();
+      },
+
+      unsubscribeOnlineMatch: () => {
+        if (onlineMatchChannel) {
+          supabase.removeChannel(onlineMatchChannel);
+          onlineMatchChannel = null;
+        }
       },
 
       throwDart: (dart) => {
-        const { gameState, matchId, isOnlineMatch } = get();
+        const { gameState, matchId, isOnlineMatch, myControlledParticipantIds } = get();
         if (!gameState || gameState.status !== 'ongoing') return;
 
         const engine = getEngine(gameState.gameMode);
         const player = gameState.players[gameState.currentPlayerIndex];
         const dartNumber = gameState.currentDartsInRound.length + 1;
         const roundNumber = gameState.currentRound;
+
+        // In an online match, only the device controlling the player whose turn it is may throw
+        if (isOnlineMatch && !myControlledParticipantIds.includes(player.participantId)) return;
 
         const newState = engine.applyThrow(gameState, dart);
 
@@ -168,18 +224,17 @@ export const useGameStore = create<GameStore>()(
             scoreValue,
           ).catch(console.error);
 
-          if (newState.status === 'finished' && newState.winnerId) {
-            syncMatchFinishedToSupabase(matchId, newState.winnerId).catch(console.error);
-          }
+          syncMatchStateToSupabase(matchId, newState).catch(console.error);
         }
       },
 
       undoLastDart: () => {
-        const { gameState, matchId, isOnlineMatch } = get();
+        const { gameState, matchId, isOnlineMatch, myControlledParticipantIds } = get();
         if (!gameState) return;
 
+        if (isOnlineMatch && !myControlledParticipantIds.includes(gameState.players[gameState.currentPlayerIndex].participantId)) return;
+
         const engine = getEngine(gameState.gameMode);
-        const wasFinished = gameState.status === 'finished';
         let newState = { ...gameState };
         let deletedDartNumber: number;
         let deletedRoundNumber: number;
@@ -243,7 +298,7 @@ export const useGameStore = create<GameStore>()(
 
         set({ gameState: newState });
 
-        // Delete from Supabase
+        // Sync to Supabase
         if (isOnlineMatch && matchId && isOnlineModeAvailable) {
           supabase
             .from('throws')
@@ -258,15 +313,15 @@ export const useGameStore = create<GameStore>()(
               if (error) console.error('Undo sync error:', error);
             });
 
-          if (wasFinished) {
-            void (async () => { const { error } = await supabase.from('matches').update({ status: 'ongoing', winner_id: null }).eq('id', matchId); if (error) console.error(error); })();
-          }
+          syncMatchStateToSupabase(matchId, newState).catch(console.error);
         }
       },
 
       nextRound: () => {
-        const { gameState } = get();
+        const { gameState, matchId, isOnlineMatch, myControlledParticipantIds } = get();
         if (!gameState || gameState.status !== 'ongoing') return;
+
+        if (isOnlineMatch && !myControlledParticipantIds.includes(gameState.players[gameState.currentPlayerIndex].participantId)) return;
 
         const engine = getEngine(gameState.gameMode);
         const newState = engine.advanceRound(gameState);
@@ -276,10 +331,15 @@ export const useGameStore = create<GameStore>()(
         if (newState.status === 'finished') {
           recordFinishedGame(newState);
         }
+
+        if (isOnlineMatch && matchId) {
+          syncMatchStateToSupabase(matchId, newState).catch(console.error);
+        }
       },
 
       resetGame: () => {
-        set({ gameState: null, matchId: null, isOnlineMatch: false });
+        get().unsubscribeOnlineMatch();
+        set({ gameState: null, matchId: null, isOnlineMatch: false, lobbyId: null, myControlledParticipantIds: [] });
       },
 
       setScoringMode: (mode) => set({ scoringMode: mode }),

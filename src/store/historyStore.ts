@@ -44,10 +44,12 @@ export const useHistoryStore = create<HistoryStore>()(
       gameHistory: [],
 
       addGame: (summary) =>
-        set((state) => ({
+        set((state) => {
+          // Online matches can report finished twice (locally + via realtime echo) — dedupe by matchId
+          if (state.gameHistory.some((g) => g.matchId === summary.matchId)) return state;
           // Most recent first, cap at 200 games to avoid unbounded growth
-          gameHistory: [summary, ...state.gameHistory].slice(0, 200),
-        })),
+          return { gameHistory: [summary, ...state.gameHistory].slice(0, 200) };
+        }),
 
       clearHistory: () => set({ gameHistory: [] }),
     }),
