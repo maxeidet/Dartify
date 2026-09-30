@@ -150,7 +150,7 @@ export function LobbyPage() {
 
   const headline =
     family === 'x01'
-      ? `${(config as X01Config).startingScore}${(config as X01Config).doubleIn ? ', double in' : ''}${(config as X01Config).doubleOut ? ', double out' : ', straight out'}.`
+      ? `${(config as X01Config).startingScore}${(config as X01Config).doubleIn ? ', double in' : ''}${(config as X01Config).doubleOut ? ', double out' : ', straight out'}${(config as X01Config).legs > 1 ? `, best of ${(config as X01Config).legs}` : ''}.`
       : family === 'around_the_clock'
         ? `1 to 20${(config as AroundTheClockConfig).includesBull ? ', then bull' : ''}.`
         : `Score on every number${(config as RoundTheWorldConfig).includesBull ? ', finish on bull' : ''}.`;
@@ -240,7 +240,23 @@ export function LobbyPage() {
                 <div className="flex flex-col -my-1">
                   <ToggleRow label="Double out" description="Finish on a double" checked={(config as X01Config).doubleOut} onChange={(v) => applyX01({ doubleOut: v })} />
                   <ToggleRow label="Double in" description="Start scoring with a double" checked={(config as X01Config).doubleIn} onChange={(v) => applyX01({ doubleIn: v })} />
+                  <ToggleRow
+                    label="Best of X legs"
+                    description="Play a multi-leg match"
+                    checked={(config as X01Config).legs > 1}
+                    onChange={(enabled) => applyX01({ legs: enabled ? 3 : 1 })}
+                  />
                 </div>
+                {(config as X01Config).legs > 1 && (
+                  <Field label="Legs">
+                    <Segmented
+                      ariaLabel="Number of legs"
+                      value={(config as X01Config).legs}
+                      onChange={(v) => applyX01({ legs: v })}
+                      options={[3, 5, 7].map(v => ({ value: v as 3 | 5 | 7, label: v }))}
+                    />
+                  </Field>
+                )}
               </>
             )}
 

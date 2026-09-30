@@ -53,6 +53,8 @@ export function MatchSetupSheet({
   const [startingScore, setStartingScore] = useState<301 | 501 | 701>(501);
   const [doubleOut, setDoubleOut] = useState(true);
   const [doubleIn, setDoubleIn] = useState(false);
+  const [bestOfEnabled, setBestOfEnabled] = useState(false);
+  const [legs, setLegs] = useState<3 | 5 | 7>(3);
 
   // Around the Clock / Round the World
   const [hitType, setHitType] = useState<HitType>('any');
@@ -87,7 +89,7 @@ export function MatchSetupSheet({
 
     let config: GameConfig;
     if (mode === 'x01') {
-      config = { mode: 'x01', startingScore, doubleOut, doubleIn, legs: 1 } satisfies X01Config;
+      config = { mode: 'x01', startingScore, doubleOut, doubleIn, legs: bestOfEnabled ? legs : 1 } satisfies X01Config;
     } else if (mode === 'around_the_clock') {
       config = { mode: 'around_the_clock', hitType, includesBull } satisfies AroundTheClockConfig;
     } else {
@@ -108,7 +110,7 @@ export function MatchSetupSheet({
         : `Score on every number${includesBull ? ', finish on bull' : ''}.`;
   const subline =
     mode === 'x01'
-      ? `First to zero wins · ${numPlayers} ${numPlayers === 1 ? 'player' : 'players'}`
+      ? `${bestOfEnabled ? `Best of ${legs} legs` : 'First to zero wins'} · ${numPlayers} ${numPlayers === 1 ? 'player' : 'players'}`
       : mode === 'around_the_clock'
         ? `${hitPhrase} · ${numPlayers} ${numPlayers === 1 ? 'player' : 'players'}`
         : `Most points wins · ${numPlayers} ${numPlayers === 1 ? 'player' : 'players'}`;
@@ -199,11 +201,23 @@ export function MatchSetupSheet({
                 <>
                   <ToggleRow label="Double out" description="Finish on a double" checked={doubleOut} onChange={setDoubleOut} />
                   <ToggleRow label="Double in" description="Start scoring with a double" checked={doubleIn} onChange={setDoubleIn} />
+                  <ToggleRow label="Best of X legs" description="Play a multi-leg match" checked={bestOfEnabled} onChange={setBestOfEnabled} />
                 </>
               ) : (
                 <ToggleRow label="Include bullseye" description="End the game on 25" checked={includesBull} onChange={setIncludesBull} />
               )}
             </div>
+
+            {mode === 'x01' && bestOfEnabled && (
+              <Field label="Legs">
+                <Segmented
+                  ariaLabel="Number of legs"
+                  value={legs}
+                  onChange={setLegs}
+                  options={[3, 5, 7].map(v => ({ value: v as 3 | 5 | 7, label: v }))}
+                />
+              </Field>
+            )}
           </section>
 
           <section className="soft-card p-5 flex flex-col gap-4">

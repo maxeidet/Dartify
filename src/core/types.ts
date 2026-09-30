@@ -71,6 +71,13 @@ export interface RoundEntry {
   isBust: boolean;
   scoreDeducted: number;   // X01 specific; other modes can use 0
   snapshot: Record<string, number | string | boolean>; // player score AFTER round
+  /**
+   * Present only when this round won a leg without winning the whole match
+   * (best-of-X X01). Captures every player's full state exactly as it was
+   * right after the winning dart, before scores reset for the next leg, so
+   * undo can restore it correctly instead of only rebuilding one player.
+   */
+  legTransition?: { players: PlayerState[] };
 }
 
 // ─────────────────────────────────────────────

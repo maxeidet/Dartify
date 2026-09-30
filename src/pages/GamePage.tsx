@@ -86,6 +86,7 @@ export function GamePage() {
   const canUndo = gameState.currentDartsInRound.length > 0 || gameState.roundHistory.length > 0;
   const startingScore = 'startingScore' in gameState.config ? gameState.config.startingScore : undefined;
   const isMyTurn = !isOnlineMatch || myControlledParticipantIds.includes(currentPlayer.participantId);
+  const showLegs = gameState.gameMode === 'x01' && 'legs' in gameState.config && gameState.config.legs > 1;
 
   const handleDartThrown = (dart: DartThrow) => {
     throwDart(dart);
@@ -223,6 +224,7 @@ export function GamePage() {
               gameMode={gameState.gameMode}
               isBust={gameState.gameMode === 'x01' && idx === gameState.currentPlayerIndex && gameState.isCurrentRoundBust}
               accent={SLOT_ACCENTS[idx % SLOT_ACCENTS.length]}
+              showLegs={showLegs}
               compact
             />
           ))}
@@ -240,6 +242,7 @@ export function GamePage() {
               gameMode={gameState.gameMode}
               isBust={gameState.gameMode === 'x01' && idx === gameState.currentPlayerIndex && gameState.isCurrentRoundBust}
               accent={SLOT_ACCENTS[idx % SLOT_ACCENTS.length]}
+              showLegs={showLegs}
             />
           ))}
         </div>

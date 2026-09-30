@@ -252,6 +252,13 @@ export const useGameStore = create<GameStore>()(
           const previousPlayerIndex = newState.players.findIndex(p => p.participantId === lastRound.participantId);
           if (previousPlayerIndex === -1) return;
 
+          // Undoing a leg-winning throw: restore every player's pre-reset state
+          // (not just the winner's) before the generic rebuild below re-derives
+          // the winner's score from their prior round snapshot.
+          if (lastRound.legTransition) {
+            newState.players = lastRound.legTransition.players;
+          }
+
           newState.roundHistory = newState.roundHistory.slice(0, -1);
           newState.currentPlayerIndex = previousPlayerIndex;
           newState.currentRound = lastRound.roundNumber;

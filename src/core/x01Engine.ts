@@ -190,9 +190,10 @@ export const x01Engine: GameModeEngine<X01Config> = {
   displayName: 'X01',
 
   initPlayerScore(config: X01Config) {
+    // legsWon lives on PlayerState directly (persists across leg resets) —
+    // this only seeds the per-leg score.
     return {
       scoreLeft: config.startingScore,
-      legsWon: 0,
     };
   },
 
@@ -229,22 +230,58 @@ export const x01Engine: GameModeEngine<X01Config> = {
     const won = !bust && newScoreLeft === 0;
 
     if (won) {
-      // Auto-advance only on win
-      const entry: RoundEntry = {
+      const legsToWinMatch = Math.floor(config.legs / 2) + 1;
+      const winnerLegsAfter = player.legsWon + 1;
+      const matchOver = winnerLegsAfter >= legsToWinMatch;
+
+      const winningPlayer: PlayerState = { ...updatedPlayer, legsWon: winnerLegsAfter };
+      const playersAfterLegWin = updatedPlayers.map((p, i) =>
+        i === state.currentPlayerIndex ? winningPlayer : p,
+      );
+
+      const entryBase = {
         participantId: player.participantId,
         roundNumber: state.currentRound,
         throws: newDartsInRound,
         actualThrows: newDartsInRound.length,
         isBust: false,
         scoreDeducted: startOfRoundScore,
-        snapshot: { ...updatedPlayer.score },
+        snapshot: { ...winningPlayer.score, legsWon: winnerLegsAfter },
+      };
+
+      if (matchOver) {
+        return {
+          ...state,
+          status: 'finished',
+          winnerId: player.participantId,
+          players: playersAfterLegWin,
+          currentDartsInRound: [],
+          isCurrentRoundBust: false,
+          roundHistory: [...state.roundHistory, entryBase],
+        };
+      }
+
+      // Leg won, match continues — reset every player's score for a fresh leg.
+      // Who starts a leg rotates round-robin by total legs completed so far.
+      const legsCompletedBefore = state.players.reduce((sum, p) => sum + p.legsWon, 0);
+      const nextStarterIndex = (legsCompletedBefore + 1) % state.players.length;
+      const freshPlayers = playersAfterLegWin.map((p) => ({
+        ...p,
+        score: x01Engine.initPlayerScore(config),
+      }));
+
+      const entry: RoundEntry = {
+        ...entryBase,
+        // Snapshot of everyone right after the winning dart, before the reset —
+        // lets undo restore the pre-transition state exactly.
+        legTransition: { players: updatedPlayers },
       };
 
       return {
         ...state,
-        status: 'finished',
-        winnerId: player.participantId,
-        players: updatedPlayers,
+        status: 'ongoing',
+        players: freshPlayers,
+        currentPlayerIndex: nextStarterIndex,
         currentDartsInRound: [],
         isCurrentRoundBust: false,
         roundHistory: [...state.roundHistory, entry],

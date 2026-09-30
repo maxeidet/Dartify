@@ -15,6 +15,8 @@ interface ScoreDisplayProps {
   compact?: boolean;
   /** Seat color, matching the player's slot from match setup */
   accent?: Accent;
+  /** Shown as "Legs N" next to the name when playing best-of-X (legs > 1) */
+  showLegs?: boolean;
 }
 
 export function ScoreDisplay({
@@ -27,6 +29,7 @@ export function ScoreDisplay({
   isBust = false,
   compact = false,
   accent = 'mint',
+  showLegs = false,
 }: ScoreDisplayProps) {
   const a = ACCENTS[accent];
   const prevScore = useRef<number | string | null>(null);
@@ -101,6 +104,11 @@ export function ScoreDisplay({
         <p className={`font-semibold text-[11px] leading-none truncate w-full text-center ${isCurrentPlayer ? 'text-slate' : 'text-slate-soft'}`}>
           {player.displayName}
         </p>
+        {showLegs && (
+          <p className="text-[9px] font-semibold tabular-nums leading-none text-subtle -mt-0.5">
+            Legs {player.legsWon}
+          </p>
+        )}
 
         {/* Main score */}
         <div
@@ -168,11 +176,15 @@ export function ScoreDisplay({
             <p className={`font-semibold text-[13px] leading-none ${isCurrentPlayer ? 'text-slate' : 'text-slate-soft'}`}>
               {player.displayName}
             </p>
-            {isCurrentPlayer && (
+            {isCurrentPlayer ? (
               <p className="text-[11px] font-medium leading-none mt-1" style={{ color: a.ink }}>
-                Your turn
+                {showLegs ? `Legs ${player.legsWon} · Your turn` : 'Your turn'}
               </p>
-            )}
+            ) : showLegs ? (
+              <p className="text-[11px] font-medium leading-none mt-1 text-subtle tabular-nums">
+                Legs {player.legsWon}
+              </p>
+            ) : null}
           </div>
         </div>
 
