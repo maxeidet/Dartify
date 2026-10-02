@@ -12,6 +12,7 @@ interface TapGridProps {
   onUndo: () => void;
   onNextRound: () => void;
   dartsInRound: DartThrow[];
+  canAdvance: boolean;
   canUndo: boolean;
   disabled?: boolean;
   /** Around the Clock limits quick scoring to this player's next target. */
@@ -77,7 +78,7 @@ const GridCell = React.memo(function GridCell({
 // The 1-Tap Grid
 // ─────────────────────────────────────────────
 
-export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUndo, disabled = false, currentTarget }: TapGridProps) {
+export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canAdvance, canUndo, disabled = false, currentTarget }: TapGridProps) {
   const { flashKey, flash } = useFlash();
 
   // Segments ordered for display (20 down to 11, then 10 down to 1)
@@ -138,14 +139,14 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
   const targetLabel = currentTarget === 25 ? 'BULL' : String(currentTarget);
   const targetThrows: Array<{ label: string; multiplier: Multiplier; className: string }> = currentTarget === 25
     ? [
-        { label: 'BULL', multiplier: 1, className: 'dart-cell-bull' },
-        { label: 'D-BULL', multiplier: 2, className: 'dart-cell-bullseye' },
-      ]
+      { label: 'BULL', multiplier: 1, className: 'dart-cell-bull' },
+      { label: 'D-BULL', multiplier: 2, className: 'dart-cell-bullseye' },
+    ]
     : [
-        { label: `S-${targetLabel}`, multiplier: 1, className: 'dart-cell-single' },
-        { label: `D-${targetLabel}`, multiplier: 2, className: 'dart-cell-double' },
-        { label: `T-${targetLabel}`, multiplier: 3, className: 'dart-cell-treble' },
-      ];
+      { label: `S-${targetLabel}`, multiplier: 1, className: 'dart-cell-single' },
+      { label: `D-${targetLabel}`, multiplier: 2, className: 'dart-cell-double' },
+      { label: `T-${targetLabel}`, multiplier: 3, className: 'dart-cell-treble' },
+    ];
 
   return (
     <div className="flex flex-col h-full select-none" style={{ userSelect: 'none' }}>
@@ -190,67 +191,67 @@ export function TapGrid({ onDartThrown, onUndo, onNextRound, dartsInRound, canUn
       ) : (
         <>
 
-      {/* ── Special top row: MISS / BULL / BULLSEYE ─── */}
-      <div className="grid grid-cols-3 gap-1.5 px-3 pb-1.5">
-        {/* MISS */}
-        <button
-          className={`dart-cell dart-cell-special h-10 ${flashKey === '0-1' ? 'score-flash' : ''}`}
-          onClick={() => handleDart({ segment: 0, multiplier: 1 })}
-          aria-label="Miss"
-        >
-          <span className="font-semibold text-[13px]">Miss</span>
-        </button>
+          {/* ── Special top row: MISS / BULL / BULLSEYE ─── */}
+          <div className="grid grid-cols-3 gap-1.5 px-3 pb-1.5">
+            {/* MISS */}
+            <button
+              className={`dart-cell dart-cell-special h-10 ${flashKey === '0-1' ? 'score-flash' : ''}`}
+              onClick={() => handleDart({ segment: 0, multiplier: 1 })}
+              aria-label="Miss"
+            >
+              <span className="font-semibold text-[13px]">Miss</span>
+            </button>
 
-        {/* BULL (25) */}
-        <button
-          className={`dart-cell dart-cell-bull h-10 ${flashKey === '25-1' ? 'score-flash' : ''}`}
-          onClick={() => handleDart({ segment: 25, multiplier: 1 })}
-          aria-label="Bull 25"
-        >
-          <span className="font-semibold text-[13px]">Bull</span>
-          <span className="text-[9px] opacity-80 leading-none mt-0.5">25</span>
-        </button>
+            {/* BULL (25) */}
+            <button
+              className={`dart-cell dart-cell-bull h-10 ${flashKey === '25-1' ? 'score-flash' : ''}`}
+              onClick={() => handleDart({ segment: 25, multiplier: 1 })}
+              aria-label="Bull 25"
+            >
+              <span className="font-semibold text-[13px]">Bull</span>
+              <span className="text-[9px] opacity-80 leading-none mt-0.5">25</span>
+            </button>
 
-        {/* BULLSEYE (50) */}
-        <button
-          className={`dart-cell dart-cell-bullseye h-10 ${flashKey === '25-2' ? 'score-flash' : ''}`}
-          onClick={() => handleDart({ segment: 25, multiplier: 2 })}
-          aria-label="Bullseye 50"
-        >
-          <span className="font-semibold text-[13px]">Bull</span>
-          <span className="text-[9px] opacity-80 leading-none mt-0.5">50 ●</span>
-        </button>
-      </div>
+            {/* BULLSEYE (50) */}
+            <button
+              className={`dart-cell dart-cell-bullseye h-10 ${flashKey === '25-2' ? 'score-flash' : ''}`}
+              onClick={() => handleDart({ segment: 25, multiplier: 2 })}
+              aria-label="Bullseye 50"
+            >
+              <span className="font-semibold text-[13px]">Bull</span>
+              <span className="text-[9px] opacity-80 leading-none mt-0.5">50 ●</span>
+            </button>
+          </div>
 
-      {/* ── Main Scoring Grid ─────────────────── */}
-      <div className="flex-1 overflow-hidden px-3 pb-1">
-        <div className="grid grid-cols-10 grid-rows-6 gap-1 h-full">
+          {/* ── Main Scoring Grid ─────────────────── */}
+          <div className="flex-1 overflow-hidden px-3 pb-1">
+            <div className="grid grid-cols-10 grid-rows-6 gap-1 h-full">
 
-          {/* ── SINGLES ROW 1: 20 → 11 ── */}
-          {topRow.map((seg) => makeCell(seg, 1, 'dart-cell-single'))}
+              {/* ── SINGLES ROW 1: 20 → 11 ── */}
+              {topRow.map((seg) => makeCell(seg, 1, 'dart-cell-single'))}
 
-          {/* ── SINGLES ROW 2: 10 → 1 ── */}
-          {bottomRow.map((seg) => makeCell(seg, 1, 'dart-cell-single'))}
+              {/* ── SINGLES ROW 2: 10 → 1 ── */}
+              {bottomRow.map((seg) => makeCell(seg, 1, 'dart-cell-single'))}
 
-          {/* ── DOUBLES ROW 1: 20 → 11 ── */}
-          {topRow.map((seg) => makeCell(seg, 2, 'dart-cell-double', '‥'))}
+              {/* ── DOUBLES ROW 1: 20 → 11 ── */}
+              {topRow.map((seg) => makeCell(seg, 2, 'dart-cell-double', '‥'))}
 
-          {/* ── DOUBLES ROW 2: 10 → 1 ── */}
-          {bottomRow.map((seg) => makeCell(seg, 2, 'dart-cell-double', '‥'))}
+              {/* ── DOUBLES ROW 2: 10 → 1 ── */}
+              {bottomRow.map((seg) => makeCell(seg, 2, 'dart-cell-double', '‥'))}
 
-          {/* ── TREBLES ROW 1: 20 → 11 ── */}
-          {topRow.map((seg) => makeCell(seg, 3, 'dart-cell-treble', '···'))}
+              {/* ── TREBLES ROW 1: 20 → 11 ── */}
+              {topRow.map((seg) => makeCell(seg, 3, 'dart-cell-treble', '···'))}
 
-          {/* ── TREBLES ROW 2: 10 → 1 ── */}
-          {bottomRow.map((seg) => makeCell(seg, 3, 'dart-cell-treble', '···'))}
+              {/* ── TREBLES ROW 2: 10 → 1 ── */}
+              {bottomRow.map((seg) => makeCell(seg, 3, 'dart-cell-treble', '···'))}
 
-        </div>
-      </div>
+            </div>
+          </div>
         </>
       )}
 
       {/* ── Footer: Undo + Next Round ─────────── */}
-      <RoundFooter onUndo={onUndo} onNextRound={onNextRound} canUndo={canUndo} className="px-3" />
+      <RoundFooter onUndo={onUndo} onNextRound={onNextRound} canAdvance={canAdvance} canUndo={canUndo} className="px-3" />
 
     </div>
   );

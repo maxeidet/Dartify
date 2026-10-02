@@ -39,6 +39,7 @@ interface ScoringViewProps {
   dartsInRound: DartThrow[];
   thrownDarts?: DartThrow[];
   canUndo: boolean;
+  canAdvance: boolean;
   disabled?: boolean;
   gameMode?: string;
   currentTarget?: Segment;
@@ -49,6 +50,7 @@ export function ScoringView({
   mode,
   onModeChange,
   onDartThrown,
+  canAdvance,
   onUndo,
   onNextRound,
   dartsInRound,
@@ -90,7 +92,7 @@ export function ScoringView({
             {/* Current Round Dart Slots */}
             <DartSlots darts={dartsInRound} className="mt-2 mb-2 z-10 relative shrink-0" />
 
-            <RoundFooter onUndo={onUndo} onNextRound={onNextRound} canUndo={canUndo} className="mt-auto" />
+            <RoundFooter canAdvance={canAdvance} onUndo={onUndo} onNextRound={onNextRound} canUndo={canUndo} className="mt-auto" />
           </div>
         ) : mode === "grid" ? (
           <TapGrid
@@ -99,6 +101,7 @@ export function ScoringView({
             onNextRound={onNextRound}
             dartsInRound={dartsInRound}
             canUndo={canUndo}
+            canAdvance={canAdvance}
             disabled={disabled}
             currentTarget={
               ["around_the_clock", "round_the_world"].includes(gameMode || "")
@@ -124,7 +127,7 @@ export function ScoringView({
             {/* Current Round Dart Slots */}
             <DartSlots darts={dartsInRound} className="mt-1.5 mb-2 z-10 relative shrink-0" />
 
-            <RoundFooter onUndo={onUndo} onNextRound={onNextRound} canUndo={canUndo} className="px-3 mt-auto" />
+            <RoundFooter canAdvance={canAdvance} onUndo={onUndo} onNextRound={onNextRound} canUndo={canUndo} className="px-3 mt-auto" />
           </div>
         )}
       </div>

@@ -304,9 +304,8 @@ export function GamePage() {
           </div>
         ) : (
           <div
-            className={`text-[12px] text-subtle font-medium tabular-nums ${
-              gameState.currentDartsInRound.length > 0 ? '' : 'invisible'
-            }`}
+            className={`text-[12px] text-subtle font-medium tabular-nums ${gameState.currentDartsInRound.length > 0 ? '' : 'invisible'
+              }`}
           >
             {gameState.currentDartsInRound.reduce((sum, d) => {
               const v = d.segment === 0 ? 0 : d.segment === 25 ? (d.multiplier === 2 ? 50 : 25) : d.segment * d.multiplier;
@@ -319,7 +318,7 @@ export function GamePage() {
 
       {/* ── Scoring Grid / Dartboard ── */}
       <div className="flex-1 min-h-0 overflow-hidden">
-          <ScoringView
+        <ScoringView
           mode={scoringMode}
           onModeChange={setScoringMode}
           onDartThrown={handleDartThrown}
@@ -327,12 +326,13 @@ export function GamePage() {
           onNextRound={nextRound}
           dartsInRound={gameState.currentDartsInRound}
           thrownDarts={gameState.currentDartsInRound}
+          canAdvance={isMyTurn}
           canUndo={canUndo && isMyTurn}
-            disabled={gameState.isCurrentRoundBust || gameState.currentDartsInRound.length >= 3 || (isOnlineMatch && !isMyTurn)}
-            gameMode={gameState.gameMode}
-            currentTarget={currentPlayer.score.currentTarget as DartThrow['segment'] | undefined}
-            isBust={gameState.gameMode === 'x01' && gameState.isCurrentRoundBust}
-          />
+          disabled={gameState.isCurrentRoundBust || gameState.currentDartsInRound.length >= 3 || (isOnlineMatch && !isMyTurn)}
+          gameMode={gameState.gameMode}
+          currentTarget={currentPlayer.score.currentTarget as DartThrow['segment'] | undefined}
+          isBust={gameState.gameMode === 'x01' && gameState.isCurrentRoundBust}
+        />
       </div>
 
       {showHistory && (

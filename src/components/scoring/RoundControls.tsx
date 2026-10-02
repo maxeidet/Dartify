@@ -11,9 +11,8 @@ export function DartSlots({ darts, className = '' }: { darts: DartThrow[]; class
         return (
           <div
             key={i}
-            className={`w-[64px] h-[36px] flex items-center justify-center rounded-full text-[15px] font-semibold tabular-nums transition-all duration-200 ${
-              dart ? 'soft-float text-slate' : 'bg-white/55 text-subtle shadow-[inset_0_0_0_1px_rgba(20,24,32,0.05)]'
-            }`}
+            className={`w-[64px] h-[36px] flex items-center justify-center rounded-full text-[15px] font-semibold tabular-nums transition-all duration-200 ${dart ? 'soft-float text-slate' : 'bg-white/55 text-subtle shadow-[inset_0_0_0_1px_rgba(20,24,32,0.05)]'
+              }`}
           >
             {dart ? throwLabel(dart) : '–'}
           </div>
@@ -24,9 +23,10 @@ export function DartSlots({ darts, className = '' }: { darts: DartThrow[]; class
 }
 
 /** Undo + Next round, pinned to the bottom of every scoring mode */
-export function RoundFooter({ onUndo, onNextRound, canUndo, className = '' }: {
+export function RoundFooter({ onUndo, onNextRound, canAdvance, canUndo, className = '' }: {
   onUndo: () => void;
   onNextRound: () => void;
+  canAdvance: boolean;
   canUndo: boolean;
   className?: string;
 }) {
@@ -43,7 +43,8 @@ export function RoundFooter({ onUndo, onNextRound, canUndo, className = '' }: {
       </button>
       <button
         onClick={onNextRound}
-        className="col-span-3 h-[46px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold"
+        disabled={!canAdvance}
+        className="col-span-3 h-[46px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
         aria-label="Next round"
       >
         Next round
