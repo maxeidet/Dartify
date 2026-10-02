@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { House, LogOut, RotateCcw, ScrollText, Target, Trophy, Users, X } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
+import { useLobbyStore } from '../store/lobbyStore';
+import { useAuthStore } from '../store/authStore';
 import { ScoringView } from '../components/scoring/ScoringView';
 import { ScoreDisplay } from '../components/game/ScoreDisplay';
 import { RoundHistory } from '../components/game/RoundHistory';
@@ -25,11 +27,14 @@ export function GamePage() {
     isOnlineMatch,
     myControlledParticipantIds,
     lobbyId,
+    matchId,
   } = useGameStore();
+  const userId = useAuthStore(s => s.user?.id);
+  const lobby = useLobbyStore(s => s.lobby);
 
   const [showHistory, setShowHistory] = useState(false);
   const [bustFlash, setBustFlash] = useState(false);
-  const [winnerVisible, setWinnerVisible] = useState(false);
+  const [startingRematch, setStartingRematch] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [historyDragOffset, setHistoryDragOffset] = useState(0);
   const [isHistoryDragging, setIsHistoryDragging] = useState(false);
@@ -46,6 +51,25 @@ export function GamePage() {
       bustAudio.current?.pause();
     };
   }, []);
+
+  const isFinished = gameState?.status === 'finished';
+
+  // Once an online match ends: release the lobby (so it no longer drops people back into this
+  // match) and watch it, so everyone follows the leader into a rematch.
+  useEffect(() => {
+    if (!isOnlineMatch || !isFinished || !lobbyId || !matchId) return;
+    const lobbyStore = useLobbyStore.getState();
+    lobbyStore.markMatchFinished(lobbyId, matchId);
+    lobbyStore.loadLobby(lobbyId);
+    lobbyStore.subscribe(lobbyId);
+    return () => useLobbyStore.getState().unsubscribe();
+  }, [isOnlineMatch, isFinished, lobbyId, matchId]);
+
+  useEffect(() => {
+    if (!isOnlineMatch || !isFinished || !lobby || lobby.id !== lobbyId) return;
+    if (lobby.status !== 'in_progress' || !lobby.active_match_id || lobby.active_match_id === matchId) return;
+    useLobbyStore.getState().joinActiveMatch();
+  }, [isOnlineMatch, isFinished, lobby, lobbyId, matchId]);
 
   const playSound = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
@@ -109,15 +133,14 @@ export function GamePage() {
           setBustFlash(true);
           setTimeout(() => setBustFlash(false), 700);
         }
-        if (updatedState.status === 'finished') {
-          setWinnerVisible(true);
-        }
       }
     }, 0);
   };
 
   // Winner overlay
-  if (winnerVisible && gameState.status === 'finished') {
+  if (gameState.status === 'finished') {
+    const lobbyReady = !!lobby && lobby.id === lobbyId;
+    const isHost = lobbyReady && lobby.host_id === userId;
     const winner = gameState.players.find((p) => p.participantId === gameState.winnerId);
     const winnerIndex = gameState.players.findIndex((p) => p.participantId === gameState.winnerId);
     const winnerAccent = ACCENTS[SLOT_ACCENTS[Math.max(0, winnerIndex) % SLOT_ACCENTS.length]];
@@ -139,7 +162,7 @@ export function GamePage() {
           </div>
           <div className="mt-2 flex gap-2">
             <button
-              onClick={() => { setWinnerVisible(false); setScoringMode('grid'); resetGame(); navigate('/'); }}
+              onClick={() => { setScoringMode('grid'); resetGame(); navigate('/'); }}
               className="flex-1 h-[56px] rounded-full soft-float soft-press flex items-center justify-center gap-2 text-[16px] font-semibold text-slate"
             >
               <House size={18} strokeWidth={2.3} />
@@ -147,16 +170,15 @@ export function GamePage() {
             </button>
             {isOnlineMatch ? (
               <button
-                onClick={() => { setWinnerVisible(false); setScoringMode('grid'); const lobby = lobbyId; resetGame(); navigate(lobby ? `/lobby/${lobby}` : '/'); }}
-                className="flex-1 h-[56px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold"
+                onClick={() => { setScoringMode('grid'); const lobby = lobbyId; resetGame(); navigate(lobby ? `/lobby/${lobby}` : '/'); }}
+                className="flex-1 h-[56px] rounded-full soft-float soft-press flex items-center justify-center gap-2 text-[16px] font-semibold text-slate"
               >
                 <Users size={18} strokeWidth={2.3} />
-                Back to lobby
+                Lobby
               </button>
             ) : (
               <button
                 onClick={() => {
-                  setWinnerVisible(false);
                   setScoringMode('grid');
                   // Rematch with the same players and rules.
                   const store = useGameStore.getState();
@@ -178,6 +200,28 @@ export function GamePage() {
               </button>
             )}
           </div>
+          {isOnlineMatch && (
+            isHost ? (
+              <button
+                onClick={async () => {
+                  setStartingRematch(true);
+                  setScoringMode('grid');
+                  // Same lobby, players and rules — everyone else follows via the lobby subscription.
+                  await useLobbyStore.getState().startMatch();
+                  setStartingRematch(false);
+                }}
+                disabled={startingRematch || !lobbyReady}
+                className="mt-2 w-full h-[56px] rounded-full soft-primary soft-press flex items-center justify-center gap-2 text-[16px] font-semibold"
+              >
+                <RotateCcw size={18} strokeWidth={2.3} />
+                {startingRematch ? 'Starting…' : 'Rematch'}
+              </button>
+            ) : (
+              <div className="mt-2 w-full h-[56px] rounded-full soft-float flex items-center justify-center text-[15px] font-semibold text-subtle">
+                Waiting for the leader to rematch…
+              </div>
+            )
+          )}
         </section>
       </div>
     );
@@ -284,7 +328,7 @@ export function GamePage() {
           dartsInRound={gameState.currentDartsInRound}
           thrownDarts={gameState.currentDartsInRound}
           canUndo={canUndo && isMyTurn}
-            disabled={gameState.status === 'finished' || gameState.isCurrentRoundBust || gameState.currentDartsInRound.length >= 3 || (isOnlineMatch && !isMyTurn)}
+            disabled={gameState.isCurrentRoundBust || gameState.currentDartsInRound.length >= 3 || (isOnlineMatch && !isMyTurn)}
             gameMode={gameState.gameMode}
             currentTarget={currentPlayer.score.currentTarget as DartThrow['segment'] | undefined}
             isBust={gameState.gameMode === 'x01' && gameState.isCurrentRoundBust}

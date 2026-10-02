@@ -6,7 +6,6 @@ import { useLobbyStore } from '../store/lobbyStore';
 import type { LobbyParticipantRecord } from '../store/lobbyStore';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
-import { supabase } from '../lib/supabase';
 import type { AroundTheClockConfig, GameConfig, RoundTheWorldConfig, X01Config } from '../core/types';
 import { InviteFriendsSheet } from '../components/shared/InviteFriendsSheet';
 import { Avatar, Badge, ConfirmDialog, PageHeader, Segmented, ShellTitle, ToggleRow } from '../components/shared/SoftUI';
@@ -58,21 +57,9 @@ export function LobbyPage() {
       return;
     }
 
-    const mine = participants.find(p => p.profile_id === user.id);
-    const isHost = lobby.host_id === user.id;
-    const myControlledIds = participants
-      .filter(p => p.status === 'joined' && (p.profile_id === user.id || (p.local_player_id && isHost)))
-      .map(p => p.id);
-    if (!mine && myControlledIds.length === 0) return;
-
-    const activeMatchId = lobby.active_match_id;
-    (async () => {
-      const { data: match } = await supabase.from('matches').select('id, state').eq('id', activeMatchId).single();
-      if (match?.state) {
-        useGameStore.getState().startOnlineGame(activeMatchId, lobby.id, myControlledIds, match.state);
-        navigate('/game');
-      }
-    })();
+    useLobbyStore.getState().joinActiveMatch().then(joined => {
+      if (joined) navigate('/game');
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobby?.status, lobby?.active_match_id, participants, user, currentMatchId]);
 

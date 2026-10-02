@@ -97,6 +97,10 @@ interface LobbyStore {
 
   updateGameMode: (config: GameConfig) => Promise<void>;
   startMatch: () => Promise<void>;
+  /** Puts this device into the lobby's active match. Returns false if there is none or it has already finished. */
+  joinActiveMatch: () => Promise<boolean>;
+  /** Flips the lobby back to 'waiting' once its active match is over (host only — RLS ignores everyone else). */
+  markMatchFinished: (lobbyId: string, matchId: string) => Promise<void>;
 
   fetchMyInvites: () => Promise<void>;
   subscribeToMyInvites: () => void;
@@ -332,6 +336,41 @@ export const useLobbyStore = create<LobbyStore>((set, get) => ({
       .map(p => p.id);
 
     useGameStore.getState().startOnlineGame(matchId, lobby.id, myControlledIds, gameState);
+  },
+
+  joinActiveMatch: async () => {
+    const { lobby, participants } = get();
+    const user = useAuthStore.getState().user;
+    if (!lobby || !lobby.active_match_id || !user) return false;
+
+    const isHost = lobby.host_id === user.id;
+    const mine = participants.find(p => p.profile_id === user.id);
+    const myControlledIds = participants
+      .filter(p => p.status === 'joined' && (p.profile_id === user.id || (p.local_player_id && isHost)))
+      .map(p => p.id);
+    if (!mine && myControlledIds.length === 0) return false;
+
+    const activeMatchId = lobby.active_match_id;
+    const { data: match } = await supabase.from('matches').select('id, status, state').eq('id', activeMatchId).single();
+    if (!match?.state) return false;
+
+    if (match.status === 'finished') {
+      // The lobby still points at a match that's over (e.g. the leader left before it ended) — heal it.
+      if (isHost) await get().markMatchFinished(lobby.id, activeMatchId);
+      return false;
+    }
+
+    useGameStore.getState().startOnlineGame(activeMatchId, lobby.id, myControlledIds, match.state);
+    return true;
+  },
+
+  markMatchFinished: async (lobbyId, matchId) => {
+    await supabase
+      .from('lobbies')
+      .update({ status: 'waiting' })
+      .eq('id', lobbyId)
+      .eq('active_match_id', matchId)
+      .eq('status', 'in_progress');
   },
 
   fetchMyInvites: async () => {
